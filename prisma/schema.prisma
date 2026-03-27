@@ -1,0 +1,135 @@
+// prisma/schema.prisma
+// Run: npx prisma db push  (after setting DATABASE_URL in .env)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id          String    @id @default(cuid())
+  clerkUserId String    @unique
+  email       String    @unique
+  name        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  projects    Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id        String    @id @default(cuid())
+  name      String
+  ownerId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  meetings  Meeting[]
+
+  @@map("projects")
+}
+
+model Meeting {
+  id           String    @id @default(cuid())
+  projectId    String
+  title        String
+  meetingDate  DateTime?
+  fileUrl      String?
+  fileName     String
+  speakerCount Int       @default(0)
+  wordCount    Int       @default(0)
+  status       MeetingStatus @default(UPLOADED)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  segments     TranscriptSegment[]
+  actionItems  ActionItem[]
+  decisions    Decision[]
+  sentiments   Sentiment[]
+
+  @@map("meetings")
+}
+
+model TranscriptSegment {
+  id        String   @id @default(cuid())
+  meetingId String
+  speaker   String
+  text      String
+  startTime String?
+  endTime   String?
+  sequence  Int
+  createdAt DateTime @default(now())
+
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  decisions Decision[]
+  sentiments Sentiment[]
+
+  @@map("transcript_segments")
+}
+
+model ActionItem {
+  id                String      @id @default(cuid())
+  meetingId         String
+  task              String
+  responsiblePerson String?
+  deadline          String?
+  status            ActionStatus @default(PENDING)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  meeting           Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("action_items")
+}
+
+model Decision {
+  id               String   @id @default(cuid())
+  meetingId        String
+  decisionText     String
+  contextSegmentId String?
+  createdAt        DateTime @default(now())
+
+  meeting          Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  contextSegment   TranscriptSegment? @relation(fields: [contextSegmentId], references: [id])
+
+  @@map("decisions")
+}
+
+model Sentiment {
+  id             String   @id @default(cuid())
+  segmentId      String
+  meetingId      String
+  speaker        String
+  sentimentScore Float
+  sentimentLabel String
+  createdAt      DateTime @default(now())
+
+  segment        TranscriptSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+  meeting        Meeting           @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@map("sentiments")
+}
+
+enum MeetingStatus {
+  UPLOADED
+  PARSING
+  PARSED
+  ANALYZING
+  ANALYZED
+  ERROR
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
