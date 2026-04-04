@@ -33,6 +33,7 @@ model Project {
 
   owner     User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   meetings  Meeting[]
+  chats     Chat[]
 
   @@map("projects")
 }
@@ -55,8 +56,55 @@ model Meeting {
   actionItems  ActionItem[]
   decisions    Decision[]
   sentiments   Sentiment[]
+  chatContexts ChatContext[]
 
   @@map("meetings")
+}
+
+// ─── Chat models ────────────────────────────────────────────────────────────
+
+model Chat {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String   @default("New chat")
+  scope     ChatScope @default(MEETING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  contexts  ChatContext[]
+
+  @@map("chats")
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String   // 'user' | 'assistant'
+  content   String
+  createdAt DateTime @default(now())
+
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+}
+
+model ChatContext {
+  id        String  @id @default(cuid())
+  chatId    String
+  meetingId String
+
+  chat      Chat    @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, meetingId])
+  @@map("chat_contexts")
+}
+
+enum ChatScope {
+  MEETING
+  PROJECT
 }
 
 model TranscriptSegment {

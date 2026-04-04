@@ -216,7 +216,10 @@ ${transcriptContext}
       role: m.role,
       parts: [{ text: m.parts }],
     })),
-    systemInstruction: systemContext,
+    systemInstruction: {
+      role: "system",
+      parts: [{ text: systemContext }],
+    },
   });
 
   const result = await chat.sendMessage(question);

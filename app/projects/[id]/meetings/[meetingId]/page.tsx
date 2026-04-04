@@ -17,6 +17,7 @@ import {
   Lightbulb,
   BookOpen,
   BarChart2,
+  MessageSquare,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import AnalyzeButton from "@/components/AnalyzeButton";
@@ -24,6 +25,7 @@ import SentimentButton from "@/components/SentimentButton";
 import ActionTable from "@/components/ActionTable";
 import TranscriptViewer from "@/components/TranscriptViewer";
 import SentimentDashboard from "@/components/SentimentDashboard";
+import ChatPanel from "@/components/ChatPanel";
 
 // ─── Data fetching ──────────────────────────────────────────────────────────
 async function getMeeting(
@@ -362,6 +364,20 @@ export default async function MeetingPage({
               />
             </div>
           </div>
+        </div>
+
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare size={16} className="text-indigo-400" />
+            <h2 className="text-base font-semibold text-white">
+              Chat with this meeting
+            </h2>
+          </div>
+          <ChatPanel
+            meetingId={meeting.id}
+            projectId={meeting.project.id}
+            meetingFileName={meeting.fileName}
+          />
         </div>
       </main>
     </div>

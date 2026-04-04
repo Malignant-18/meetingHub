@@ -1,9 +1,15 @@
 // app/dashboard/page.tsx
-import { auth } from '@clerk/nextjs/server'
-import { prisma } from '@/lib/prisma'
-import Link from 'next/link'
-import { Plus, FolderOpen, FileText, CheckSquare, TrendingUp } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import {
+  Plus,
+  FolderOpen,
+  FileText,
+  CheckSquare,
+  TrendingUp,
+} from "lucide-react";
+import { formatDate } from "@/lib/utils";
 
 async function getProjects(clerkUserId: string) {
   // Ensure user exists in our DB
@@ -12,9 +18,9 @@ async function getProjects(clerkUserId: string) {
     update: {},
     create: {
       clerkUserId,
-      email: '', // Will be filled by webhook later
+      email: "", // Will be filled by webhook later
     },
-  })
+  });
 
   const projects = await prisma.project.findMany({
     where: { ownerId: user.id },
@@ -25,24 +31,27 @@ async function getProjects(clerkUserId: string) {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
-  })
+    orderBy: { createdAt: "desc" },
+  });
 
   return projects.map((p) => ({
     id: p.id,
     name: p.name,
     createdAt: p.createdAt,
     meetingCount: p.meetings.length,
-    totalActionItems: p.meetings.reduce((sum, m) => sum + m._count.actionItems, 0),
+    totalActionItems: p.meetings.reduce(
+      (sum, m) => sum + m._count.actionItems,
+      0,
+    ),
     totalDecisions: p.meetings.reduce((sum, m) => sum + m._count.decisions, 0),
-  }))
+  }));
 }
 
 export default async function DashboardPage() {
-  const { userId } = auth()
-  if (!userId) return null
+  const { userId } = auth();
+  if (!userId) return null;
 
-  const projects = await getProjects(userId)
+  const projects = await getProjects(userId);
 
   return (
     <div>
@@ -51,7 +60,7 @@ export default async function DashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Your Projects</h1>
           <p className="text-slate-400 text-sm mt-1">
-            {projects.length} project{projects.length !== 1 ? 's' : ''}
+            {projects.length} project{projects.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
@@ -63,7 +72,7 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Total projects', value: projects.length, icon: FolderOpen, color: 'text-indigo-400' },
@@ -78,14 +87,16 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
-
+*/}
       {/* Empty state */}
       {projects.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-600/20 flex items-center justify-center mb-4">
             <FolderOpen size={28} className="text-indigo-400" />
           </div>
-          <h2 className="text-white font-semibold text-lg mb-2">No projects yet</h2>
+          <h2 className="text-white font-semibold text-lg mb-2">
+            No projects yet
+          </h2>
           <p className="text-slate-400 text-sm mb-6 max-w-xs">
             Create your first project by uploading a meeting transcript
           </p>
@@ -112,7 +123,9 @@ export default async function DashboardPage() {
                 <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
                   <FolderOpen size={18} className="text-indigo-400" />
                 </div>
-                <span className="text-xs text-slate-500">{formatDate(project.createdAt)}</span>
+                <span className="text-xs text-slate-500">
+                  {formatDate(project.createdAt)}
+                </span>
               </div>
 
               <h3 className="font-semibold text-white mb-1 group-hover:text-indigo-300 transition-colors">
@@ -122,15 +135,21 @@ export default async function DashboardPage() {
               {/* Stats */}
               <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-700/50">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-white">{project.meetingCount}</div>
+                  <div className="text-lg font-bold text-white">
+                    {project.meetingCount}
+                  </div>
                   <div className="text-xs text-slate-500">meetings</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-white">{project.totalActionItems}</div>
+                  <div className="text-lg font-bold text-white">
+                    {project.totalActionItems}
+                  </div>
                   <div className="text-xs text-slate-500">actions</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-white">{project.totalDecisions}</div>
+                  <div className="text-lg font-bold text-white">
+                    {project.totalDecisions}
+                  </div>
                   <div className="text-xs text-slate-500">decisions</div>
                 </div>
               </div>
@@ -139,5 +158,5 @@ export default async function DashboardPage() {
         </div>
       )}
     </div>
-  )
+  );
 }
