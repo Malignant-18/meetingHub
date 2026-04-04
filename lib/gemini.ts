@@ -36,7 +36,7 @@ export interface SentimentSegment {
   segment: string;
   sentiment: "positive" | "neutral" | "negative" | "conflict";
   score: number;
-  time_label: string;
+  time_label: "early" | "mid" | "late";
 }
 
 // ─── Decision + Action Item Extraction ────────────────────────────────────
@@ -44,19 +44,42 @@ export async function extractDecisionsAndActions(
   transcriptText: string,
 ): Promise<ExtractionResult> {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({ model: MODEL });
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.1,
+    },
+  });
 
-  const prompt = `You are an expert meeting analyst. Analyze the following meeting transcript and extract:
-1. All decisions made (things the team agreed on or resolved)
-2. All action items assigned (tasks with owners and deadlines)
+  const prompt = `You are an expert meeting analyst. Analyze this meeting transcript carefully.
 
-Return ONLY a valid JSON object with this exact structure — no markdown, no explanation:
+Extract ALL of the following:
+1. DECISIONS — things that were definitively agreed upon, resolved, or chosen
+2. ACTION ITEMS — specific tasks assigned to specific people with deadlines
+
+RULES:
+- Only include decisions that were clearly finalized, not just suggested
+- For action items, always extract who is responsible even if you have to infer from context
+- If no deadline is mentioned, write "Not specified"
+- If responsible person is unclear, write "Team"
+- Be concise — each decision should be one clear sentence
+- Return 0 items in an array if none exist — never return null
+
+Return this exact JSON structure and nothing else:
 {
   "decisions": [
-    { "decision": "string describing what was decided", "context": "brief context or reason" }
+    {
+      "decision": "Clear statement of what was decided",
+      "context": "Brief reason or context behind this decision"
+    }
   ],
   "action_items": [
-    { "task": "what needs to be done", "responsible_person": "name or Unknown", "deadline": "date/time or 'Not specified'" }
+    {
+      "task": "Specific thing that needs to be done",
+      "responsible_person": "Name of person responsible",
+      "deadline": "When it should be done by"
+    }
   ]
 }
 
@@ -64,15 +87,25 @@ TRANSCRIPT:
 ${transcriptText}`;
 
   const result = await model.generateContent(prompt);
-  const text = result.response.text();
-
-  // Strip markdown code fences if present
-  const clean = text.replace(/```json|```/g, "").trim();
+  const text = result.response.text().trim();
+  const clean = text
+    .replace(/^```json\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   try {
-    return JSON.parse(clean);
+    const parsed = JSON.parse(clean);
+    return {
+      decisions: Array.isArray(parsed.decisions) ? parsed.decisions : [],
+      action_items: Array.isArray(parsed.action_items)
+        ? parsed.action_items
+        : [],
+    };
   } catch {
-    throw new Error("Gemini returned invalid JSON for extraction");
+    console.error("[gemini] JSON parse error. Raw response:", text);
+    throw new Error(
+      "Gemini returned malformed JSON. Try re-running the analysis.",
+    );
   }
 }
 
@@ -81,18 +114,46 @@ export async function analyzeSentiment(
   transcriptText: string,
 ): Promise<SentimentSegment[]> {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({ model: MODEL });
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.2,
+    },
+  });
 
-  const prompt = `Analyze the sentiment and tone of each speaker in this meeting transcript.
-Break the transcript into meaningful segments (roughly every 3-5 exchanges per speaker).
+  const prompt = `You are an expert conversation analyst specializing in meeting dynamics and sentiment.
 
-Return ONLY a valid JSON array — no markdown, no explanation:
+Analyze the tone and sentiment of each speaker in this meeting transcript.
+Group the transcript into time periods (early, mid, late) and score each speaker's sentiment in each period.
+
+SENTIMENT LABELS (use exactly these values):
+- "positive"  = constructive, agreeable, enthusiastic, solution-focused
+- "neutral"   = factual, matter-of-fact, neither positive nor negative
+- "negative"  = frustrated, dismissive, pessimistic, resistant
+- "conflict"  = direct disagreement, argument, pushback, tension
+
+SCORE GUIDE:
+- 80-100 = very positive
+- 60-79  = mildly positive
+- 40-59  = neutral
+- 20-39  = negative
+- 0-19   = very negative / high conflict
+
+RULES:
+- Create one entry per speaker per time period (early/mid/late)
+- The "segment" field should be a short direct quote or 1-sentence summary of their tone
+- Never invent speakers not in the transcript
+- Return an empty array [] if the transcript has no clear speaker labels
+- Every score must be an integer 0-100
+
+Return ONLY this JSON array structure:
 [
   {
-    "speaker": "speaker name",
-    "segment": "short quote or summary of what they said",
+    "speaker": "exact speaker name from transcript",
+    "segment": "short quote or summary showing their tone",
     "sentiment": "positive" | "neutral" | "negative" | "conflict",
-    "score": number between 0 and 100 (100 = very positive, 0 = very negative),
+    "score": 75,
     "time_label": "early" | "mid" | "late"
   }
 ]
@@ -101,13 +162,34 @@ TRANSCRIPT:
 ${transcriptText}`;
 
   const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  const clean = text.replace(/```json|```/g, "").trim();
+  const text = result.response.text().trim();
+  const clean = text
+    .replace(/^```json\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 
   try {
-    return JSON.parse(clean);
+    const parsed = JSON.parse(clean);
+    if (!Array.isArray(parsed)) throw new Error("Expected array");
+
+    return parsed.map((item: any) => ({
+      speaker: String(item.speaker ?? "Unknown"),
+      segment: String(item.segment ?? ""),
+      sentiment: (["positive", "neutral", "negative", "conflict"].includes(
+        item.sentiment,
+      )
+        ? item.sentiment
+        : "neutral") as SentimentSegment["sentiment"],
+      score: Math.min(100, Math.max(0, Math.round(Number(item.score) || 50))),
+      time_label: (["early", "mid", "late"].includes(item.time_label)
+        ? item.time_label
+        : "mid") as SentimentSegment["time_label"],
+    }));
   } catch {
-    throw new Error("Gemini returned invalid JSON for sentiment analysis");
+    console.error("[gemini] Sentiment JSON parse error. Raw:", text);
+    throw new Error(
+      "Gemini returned malformed JSON for sentiment. Try re-running.",
+    );
   }
 }
 

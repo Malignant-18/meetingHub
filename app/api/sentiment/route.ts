@@ -7,7 +7,7 @@ import {
   mapSentimentSegmentsToRecords,
 } from "@/lib/project-insights";
 
-export async function POST(req: Request) {
+export async function GET(req: Request) {
   try {
     const { userId: clerkUserId } = auth();
     if (!clerkUserId) {
@@ -17,7 +17,57 @@ export async function POST(req: Request) {
       );
     }
 
-    const { meetingId } = await req.json();
+    const { searchParams } = new URL(req.url);
+    const meetingId = searchParams.get("meetingId");
+    if (!meetingId) {
+      return NextResponse.json(
+        { success: false, error: "meetingId is required" },
+        { status: 400 },
+      );
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkUserId } });
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 },
+      );
+    }
+
+    const sentiments = await prisma.sentiment.findMany({
+      where: { meetingId, meeting: { project: { ownerId: user.id } } },
+      orderBy: { createdAt: "asc" },
+      include: {
+        segment: {
+          select: { text: true, startTime: true, speaker: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ success: true, data: sentiments });
+  } catch (err: any) {
+    console.error("[GET /api/sentiment]", err);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch sentiment data" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(req: Request) {
+  let meetingId: string | undefined;
+
+  try {
+    const { userId: clerkUserId } = auth();
+    if (!clerkUserId) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
+    }
+
+    const body = await req.json();
+    meetingId = body?.meetingId;
     if (!meetingId) {
       return NextResponse.json(
         { success: false, error: "meetingId is required" },
