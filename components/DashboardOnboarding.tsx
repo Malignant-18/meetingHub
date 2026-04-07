@@ -100,9 +100,6 @@ export default function DashboardOnboarding() {
           padding: "9px 16px",
         },
         buttonSkip: { color: "#8fb79a" },
-        spotlight: {
-          borderRadius: 28,
-        },
       }}
       callback={(data) => {
         const finished =
