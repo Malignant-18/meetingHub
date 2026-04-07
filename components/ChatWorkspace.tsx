@@ -625,7 +625,7 @@ export default function ChatWorkspace({
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center" />
               <div className="overflow-hidden transition-[max-width,opacity,transform] duration-300 ease-out max-w-[180px] translate-x-0 opacity-100">
                 <h1 className="text-xl font-semibold tracking-tight text-[#f3fff5]">
-                  meeting<span className="font-bold">Hub</span>
+                  Mr.<span className="font-bold">Minutes</span>
                 </h1>
               </div>
             </div>

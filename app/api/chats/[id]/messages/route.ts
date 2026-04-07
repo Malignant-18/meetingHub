@@ -136,7 +136,7 @@ export async function POST(
     const dbSegmentIds = validRefs.map((reference) =>
       reference.replace(/^seg_/, ""),
     );
-    const uniqueDbSegmentIds = [...new Set(dbSegmentIds)];
+    const uniqueDbSegmentIds = Array.from(new Set(dbSegmentIds));
 
     const isFirstMessage = chat.messages.length === 0;
 
