@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState, type ComponentType } from "react";
+import { useMemo, useState } from "react";
 import {
   AlertOctagon,
   BarChart3,
   CheckCircle2,
   Clock,
+  type LucideIcon,
   MinusCircle,
   TriangleAlert,
   Waves,
@@ -49,7 +50,7 @@ const SENTIMENT_CONFIG: Record<
     text: string;
     dot: string;
     timeline: string;
-    icon: ComponentType<{ size?: number; className?: string }>;
+    icon: LucideIcon;
     summary: string;
   }
 > = {
