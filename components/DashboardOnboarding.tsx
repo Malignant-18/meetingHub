@@ -11,21 +11,18 @@ const steps: Step[] = [
     title: "Welcome to Mr.Minutes",
     content:
       "This is your command center for uploads, meeting insights, and project-level analysis.",
-    disableBeacon: true,
   },
   {
     target: "[data-tour='dashboard-create-project']",
     title: "Create a project",
     content:
       "Start here to upload transcripts into a new or existing project workspace.",
-    disableBeacon: true,
   },
   {
     target: "[data-tour='dashboard-projects']",
     title: "Your projects",
     content:
       "Every uploaded meeting is grouped under a project so you can review decisions, sentiment, and chat context together.",
-    disableBeacon: true,
   },
 ];
 
