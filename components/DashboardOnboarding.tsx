@@ -45,22 +45,33 @@ export default function DashboardOnboarding() {
       disableScrolling
       disableOverlayClose
       styles={{
-        options: {
-          arrowColor: "#081004",
-          backgroundColor: "#081004",
-          overlayColor: "rgba(5, 10, 0, 0.74)",
-          primaryColor: "#69FF97",
-          textColor: "#d5f5dc",
-          zIndex: 70,
+        arrow: {
+          color: "#081004",
         },
         beacon: {
           display: "none",
         },
-        tooltipContainer: {
+        beaconInner: {
+          display: "none",
+        },
+        beaconOuter: {
+          display: "none",
+        },
+        overlay: {
+          backgroundColor: "rgba(5, 10, 0, 0.74)",
+          zIndex: 70,
+        },
+        floater: {
+          zIndex: 71,
+        },
+        tooltip: {
           backgroundColor: "#081004",
           border: "1px solid rgba(38, 162, 105, 0.22)",
-          borderRadius: "24px",
+          borderRadius: 24,
           boxShadow: "0 24px 60px rgba(0, 0, 0, 0.38)",
+          color: "#d5f5dc",
+        },
+        tooltipContainer: {
           padding: "12px 12px 8px",
         },
         tooltipTitle: {
@@ -91,7 +102,7 @@ export default function DashboardOnboarding() {
           color: "#d5f5dc",
           padding: "9px 14px",
         },
-        buttonNext: {
+        buttonPrimary: {
           background:
             "linear-gradient(135deg, #69FF97 0%, #26a269 55%, #00E4FF 100%)",
           borderRadius: 9999,
