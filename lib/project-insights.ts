@@ -238,7 +238,7 @@ export function summarizeProjectSentiment(
     0,
   );
 
-  const speakerSummaries = [...speakerMap.entries()]
+  const speakerSummaries = Array.from(speakerMap.entries())
     .map(([speaker, value]) => ({
       speaker,
       averageScore: round(value.totalScore / value.totalSegments),
