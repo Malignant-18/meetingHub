@@ -96,7 +96,7 @@ function parseVTT(content: string, filename: string): ParseResult {
       let speaker = 'Unknown'
       let text = fullText
 
-      const vTagMatch = fullText.match(/^<v\s+([^>]+)>(.*)/s)
+      const vTagMatch = fullText.match(/^<v\s+([^>]+)>([\s\S]*)/)
       const colonMatch = fullText.match(/^([A-Za-z][^:]{0,30}):\s+(.+)/)
 
       if (vTagMatch) {
