@@ -4,6 +4,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const CHAT_LIMIT_PER_PROJECT = 5;
@@ -23,7 +24,11 @@ export async function GET(req: Request) {
     const meetingId = searchParams.get("meetingId");
     const projectId = searchParams.get("projectId");
 
-    const scope = searchParams.get("scope");
+    const scopeParam = searchParams.get("scope");
+    const scope =
+      scopeParam === "MEETING" || scopeParam === "PROJECT"
+        ? scopeParam
+        : undefined;
 
     const user = await prisma.user.findUnique({ where: { clerkUserId } });
     if (!user)
@@ -32,21 +37,21 @@ export async function GET(req: Request) {
         { status: 404 },
       );
 
-    const where = meetingId
+    const where: Prisma.ChatWhereInput = meetingId
       ? {
           contexts: { some: { meetingId } },
           project: { ownerId: user.id },
-          ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
+          ...(scope ? { scope } : {}),
         }
       : projectId
         ? {
             projectId,
             project: { ownerId: user.id },
-            ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
+            ...(scope ? { scope } : {}),
           }
         : {
             project: { ownerId: user.id },
-            ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
+            ...(scope ? { scope } : {}),
           };
 
     const chats = await prisma.chat.findMany({
