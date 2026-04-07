@@ -40,10 +40,18 @@ export default function DashboardOnboarding() {
       run={run}
       steps={steps}
       continuous
-      showProgress
-      showSkipButton
-      disableScrolling
-      disableOverlayClose
+      options={{
+        showProgress: true,
+        skipScroll: true,
+        skipBeacon: true,
+        overlayClickAction: false,
+        arrowColor: "#081004",
+        backgroundColor: "#081004",
+        overlayColor: "rgba(5, 10, 0, 0.74)",
+        primaryColor: "#69FF97",
+        textColor: "#d5f5dc",
+        buttons: ["back", "close", "primary", "skip"],
+      }}
       styles={{
         arrow: {
           color: "#081004",
@@ -112,7 +120,7 @@ export default function DashboardOnboarding() {
         },
         buttonSkip: { color: "#8fb79a" },
       }}
-      callback={(data) => {
+      onEvent={(data) => {
         const finished =
           data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED;
         if (!finished || typeof window === "undefined") return;
