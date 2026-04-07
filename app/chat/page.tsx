@@ -22,11 +22,46 @@ export default async function ChatPage({
     user.id,
   );
 
+  const serializedMeetingChats = meetingChats.map((chat) => ({
+    ...chat,
+    createdAt: chat.createdAt.toISOString(),
+    updatedAt: chat.updatedAt.toISOString(),
+    contexts: chat.contexts.map((context) => ({
+      ...context,
+      meeting: {
+        ...context.meeting,
+        createdAt: context.meeting.createdAt.toISOString(),
+      },
+    })),
+  }));
+
+  const serializedProjectChats = projectChats.map((chat) => ({
+    ...chat,
+    createdAt: chat.createdAt.toISOString(),
+    updatedAt: chat.updatedAt.toISOString(),
+    contexts: chat.contexts.map((context) => ({
+      ...context,
+      meeting: {
+        ...context.meeting,
+        createdAt: context.meeting.createdAt.toISOString(),
+      },
+    })),
+  }));
+
+  const serializedProjects = projects.map((project) => ({
+    ...project,
+    createdAt: project.createdAt.toISOString(),
+    meetings: project.meetings.map((meeting) => ({
+      ...meeting,
+      createdAt: meeting.createdAt.toISOString(),
+    })),
+  }));
+
   return (
     <ChatWorkspace
-      meetingChats={meetingChats}
-      projectChats={projectChats}
-      projects={projects}
+      meetingChats={serializedMeetingChats as any}
+      projectChats={serializedProjectChats as any}
+      projects={serializedProjects}
       initialProjectId={searchParams?.projectId ?? null}
       initialMeetingId={searchParams?.meetingId ?? null}
     />
