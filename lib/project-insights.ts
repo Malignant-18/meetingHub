@@ -332,7 +332,7 @@ function overlapScore(left: string, right: string): number {
   if (leftWords.size === 0 || rightWords.size === 0) return 0;
 
   let matches = 0;
-  for (const word of rightWords) {
+  for (const word of Array.from(rightWords)) {
     if (leftWords.has(word)) matches += 1;
   }
 
