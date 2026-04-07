@@ -103,13 +103,13 @@ export async function POST(req: Request) {
     );
 
     await prisma.$transaction(async (tx) => {
-      await tx.sentiment.deleteMany({ where: { meetingId } });
+      await tx.sentiment.deleteMany({ where: { meetingId: meeting.id } });
 
       if (records.length > 0) {
         await tx.sentiment.createMany({
           data: records.map((record) => ({
             segmentId: record.segmentId,
-            meetingId,
+            meetingId: meeting.id,
             speaker: record.speaker,
             sentimentScore: record.sentimentScore,
             sentimentLabel: record.sentimentLabel,
