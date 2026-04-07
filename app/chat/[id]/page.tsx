@@ -28,10 +28,46 @@ export default async function ChatDetailPage({
 
   if (!activeChat) notFound();
 
+  const serializedMeetingChats = sidebarData.meetingChats.map((chat) => ({
+    ...chat,
+    createdAt: chat.createdAt.toISOString(),
+    updatedAt: chat.updatedAt.toISOString(),
+    contexts: chat.contexts.map((context) => ({
+      ...context,
+      meeting: {
+        ...context.meeting,
+        createdAt: context.meeting.createdAt.toISOString(),
+      },
+    })),
+  }));
+
+  const serializedProjectChats = sidebarData.projectChats.map((chat) => ({
+    ...chat,
+    createdAt: chat.createdAt.toISOString(),
+    updatedAt: chat.updatedAt.toISOString(),
+    contexts: chat.contexts.map((context) => ({
+      ...context,
+      meeting: {
+        ...context.meeting,
+        createdAt: context.meeting.createdAt.toISOString(),
+      },
+    })),
+  }));
+
+  const serializedProjects = sidebarData.projects.map((project) => ({
+    ...project,
+    createdAt: project.createdAt.toISOString(),
+    meetings: project.meetings.map((meeting) => ({
+      ...meeting,
+      createdAt: meeting.createdAt.toISOString(),
+    })),
+  }));
+
   // Parse references JSON string on each assistant message
   const messagesWithRefs = activeChat.messages.map((msg) => ({
     ...msg,
     role: msg.role as "user" | "assistant",
+    createdAt: msg.createdAt.toISOString(),
     // references is stored as JSON string in DB, parse it back to array
     references:
       msg.role === "assistant" && (msg as any).references
@@ -60,12 +96,26 @@ export default async function ChatDetailPage({
         : [],
   }));
 
+  const serializedActiveChat = {
+    ...activeChat,
+    createdAt: activeChat.createdAt.toISOString(),
+    updatedAt: activeChat.updatedAt.toISOString(),
+    contexts: activeChat.contexts.map((context) => ({
+      ...context,
+      meeting: {
+        ...context.meeting,
+        createdAt: context.meeting.createdAt.toISOString(),
+      },
+    })),
+    messages: messagesWithRefs,
+  };
+
   return (
     <ChatWorkspace
-      meetingChats={sidebarData.meetingChats}
-      projectChats={sidebarData.projectChats}
-      projects={sidebarData.projects}
-      activeChat={{ ...activeChat, messages: messagesWithRefs } as any}
+      meetingChats={serializedMeetingChats as any}
+      projectChats={serializedProjectChats as any}
+      projects={serializedProjects}
+      activeChat={serializedActiveChat as any}
       transcriptSegments={transcriptSegments.map((seg) => ({
         id: seg.id,
         speaker: seg.speaker,
