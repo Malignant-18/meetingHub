@@ -97,17 +97,17 @@ export default function ProjectInsights({
 
   return (
     <div className="mt-12 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-      <section className="bg-[#171629] border border-slate-700/40 rounded-2xl p-6">
+      <section className="rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-indigo-300 text-sm font-medium">
+            <div className="flex items-center gap-2 text-[#69FF97] text-sm font-medium">
               <BrainCircuit size={16} />
               Decision Extractor
             </div>
-            <h2 className="text-white text-xl font-semibold mt-2">
+            <h2 className="text-[#f6fff7] text-xl font-semibold mt-2">
               Decisions and action items across the project
             </h2>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-[#8fb79a] text-sm mt-1">
               Re-run extraction whenever new transcripts land or existing meetings change.
             </p>
           </div>
@@ -115,7 +115,7 @@ export default function ProjectInsights({
           <button
             onClick={runDecisionAnalysis}
             disabled={runningDecisionAnalysis}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 px-4 py-2.5 text-sm font-medium text-white transition-colors"
+            className="plasma-button plasma-button-secondary inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-[#041102] transition-transform hover:scale-[1.01] disabled:opacity-60"
           >
             {runningDecisionAnalysis ? (
               <Loader2 size={16} className="animate-spin" />
@@ -154,8 +154,8 @@ export default function ProjectInsights({
         )}
 
         <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-            <h3 className="text-white font-medium mb-3">Project decisions</h3>
+          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
+            <h3 className="text-[#f6fff7] font-medium mb-3">Project decisions</h3>
             {decisions.decisions.length === 0 ? (
               <EmptyState text="No extracted decisions yet. Run the extractor to generate them from all project meetings." />
             ) : (
@@ -163,12 +163,12 @@ export default function ProjectInsights({
                 {decisions.decisions.map((decision) => (
                   <div
                     key={decision.id}
-                    className="rounded-xl border border-slate-700/30 bg-slate-900/20 p-3"
+                    className="rounded-xl border border-[#26a269]/10 bg-[#0d1808] p-3"
                   >
-                    <p className="text-sm text-slate-100 leading-relaxed">
+                    <p className="text-sm text-[#d5f5dc] leading-relaxed">
                       {decision.text}
                     </p>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500">
+                    <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[#70907a]">
                       <span>{decision.meetingTitle}</span>
                       <span>{formatDate(decision.meetingCreatedAt)}</span>
                     </div>
@@ -178,8 +178,8 @@ export default function ProjectInsights({
             )}
           </div>
 
-          <div className="rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-            <h3 className="text-white font-medium mb-3">Action tracker</h3>
+          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
+            <h3 className="text-[#f6fff7] font-medium mb-3">Action tracker</h3>
             {decisions.actionItems.length === 0 ? (
               <EmptyState text="No action items are stored for this project yet." />
             ) : (
@@ -187,19 +187,19 @@ export default function ProjectInsights({
                 {decisions.actionItems.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-xl border border-slate-700/30 bg-slate-900/20 p-3"
+                    className="rounded-xl border border-[#26a269]/10 bg-[#0d1808] p-3"
                   >
-                    <p className="text-sm text-slate-100 leading-relaxed">
+                    <p className="text-sm text-[#d5f5dc] leading-relaxed">
                       {item.task}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
-                      <span className="rounded-full bg-slate-800 px-2 py-1">
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#8fb79a]">
+                      <span className="rounded-full bg-[#10200f] px-2 py-1">
                         {item.meetingTitle}
                       </span>
-                      <span className="rounded-full bg-slate-800 px-2 py-1">
+                      <span className="rounded-full bg-[#10200f] px-2 py-1">
                         Owner: {item.responsiblePerson || 'Unknown'}
                       </span>
-                      <span className="rounded-full bg-slate-800 px-2 py-1">
+                      <span className="rounded-full bg-[#10200f] px-2 py-1">
                         Deadline: {item.deadline || 'Not specified'}
                       </span>
                     </div>
@@ -211,17 +211,17 @@ export default function ProjectInsights({
         </div>
       </section>
 
-      <section className="bg-[#171629] border border-slate-700/40 rounded-2xl p-6">
+      <section className="rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-emerald-300 text-sm font-medium">
+            <div className="flex items-center gap-2 text-[#00E4FF] text-sm font-medium">
               <MessageSquareHeart size={16} />
               Sentiment Dashboard
             </div>
-            <h2 className="text-white text-xl font-semibold mt-2">
+            <h2 className="text-[#f6fff7] text-xl font-semibold mt-2">
               Speaker tone and meeting sentiment trends
             </h2>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-[#8fb79a] text-sm mt-1">
               Analyze tone across transcripts to spot alignment, tension, and outliers.
             </p>
           </div>
@@ -229,7 +229,7 @@ export default function ProjectInsights({
           <button
             onClick={runSentimentAnalysis}
             disabled={runningSentimentAnalysis}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 px-4 py-2.5 text-sm font-medium text-white transition-colors"
+            className="plasma-button plasma-button-primary inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-white transition-transform hover:scale-[1.01] disabled:opacity-60"
           >
             {runningSentimentAnalysis ? (
               <Loader2 size={16} className="animate-spin" />
@@ -253,8 +253,8 @@ export default function ProjectInsights({
             value={sentiment.totalSegments}
             color="text-emerald-300"
           />
-          <div className="rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-            <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
+            <div className="text-xs uppercase tracking-[0.18em] text-[#70907a]">
               Overall tone
             </div>
             <div className="mt-3 flex items-center gap-3">
@@ -268,7 +268,7 @@ export default function ProjectInsights({
                   ? 'No data'
                   : sentiment.overallLabel}
               </span>
-              <span className="text-2xl font-bold text-white">
+              <span className="text-2xl font-bold text-[#f6fff7]">
                 {sentiment.overallAverageScore ?? '--'}
               </span>
             </div>
@@ -281,8 +281,8 @@ export default function ProjectInsights({
           </p>
         )}
 
-        <div className="mt-6 rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-          <h3 className="text-white font-medium">Speaker breakdown</h3>
+        <div className="mt-6 rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
+          <h3 className="text-[#f6fff7] font-medium">Speaker breakdown</h3>
           {sentiment.speakerSummaries.length === 0 ? (
             <div className="mt-3">
               <EmptyState text="No sentiment data stored yet. Run the dashboard to create speaker summaries." />

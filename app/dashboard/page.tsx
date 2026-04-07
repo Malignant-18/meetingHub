@@ -1,4 +1,3 @@
-// app/dashboard/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -8,17 +7,18 @@ import {
   FileText,
   CheckSquare,
   TrendingUp,
+  ArrowRight,
 } from "lucide-react";
+
 import { formatDate } from "@/lib/utils";
 
 async function getProjects(clerkUserId: string) {
-  // Ensure user exists in our DB
   const user = await prisma.user.upsert({
     where: { clerkUserId },
     update: {},
     create: {
       clerkUserId,
-      email: "", // Will be filled by webhook later
+      email: `${clerkUserId}@placeholder.local`,
     },
   });
 
@@ -34,16 +34,19 @@ async function getProjects(clerkUserId: string) {
     orderBy: { createdAt: "desc" },
   });
 
-  return projects.map((p) => ({
-    id: p.id,
-    name: p.name,
-    createdAt: p.createdAt,
-    meetingCount: p.meetings.length,
-    totalActionItems: p.meetings.reduce(
-      (sum, m) => sum + m._count.actionItems,
+  return projects.map((project) => ({
+    id: project.id,
+    name: project.name,
+    createdAt: project.createdAt,
+    meetingCount: project.meetings.length,
+    totalActionItems: project.meetings.reduce(
+      (sum, meeting) => sum + meeting._count.actionItems,
       0,
     ),
-    totalDecisions: p.meetings.reduce((sum, m) => sum + m._count.decisions, 0),
+    totalDecisions: project.meetings.reduce(
+      (sum, meeting) => sum + meeting._count.decisions,
+      0,
+    ),
   }));
 }
 
@@ -52,110 +55,167 @@ export default async function DashboardPage() {
   if (!userId) return null;
 
   const projects = await getProjects(userId);
+  const totalMeetings = projects.reduce((sum, project) => sum + project.meetingCount, 0);
+  const totalActionItems = projects.reduce(
+    (sum, project) => sum + project.totalActionItems,
+    0,
+  );
+  const totalDecisions = projects.reduce(
+    (sum, project) => sum + project.totalDecisions,
+    0,
+  );
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Your Projects</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            {projects.length} project{projects.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link
-          href="/upload"
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-xl transition-colors"
-        >
-          <Plus size={16} />
-          New project
-        </Link>
-      </div>
+    <div className="space-y-10">
+      <section className="rounded-[32px] border border-[#26a269]/18 bg-[#081004]/76 px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-8">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-sm uppercase tracking-[0.22em] text-[#69FF97]">
+              Workspace Overview
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#f6fff7] sm:text-5xl">
+              Your projects, transcripts, and extracted outcomes in one place.
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-[#8fb79a] sm:text-base">
+              Track every uploaded meeting, review decisions and action items,
+              and jump back into project-level analysis without digging through
+              scattered transcripts.
+            </p>
+          </div>
 
-      {/* Stats row
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: 'Total projects', value: projects.length, icon: FolderOpen, color: 'text-indigo-400' },
-          { label: 'Total meetings', value: projects.reduce((s, p) => s + p.meetingCount, 0), icon: FileText, color: 'text-purple-400' },
-          { label: 'Action items', value: projects.reduce((s, p) => s + p.totalActionItems, 0), icon: CheckSquare, color: 'text-emerald-400' },
-          { label: 'Decisions made', value: projects.reduce((s, p) => s + p.totalDecisions, 0), icon: TrendingUp, color: 'text-amber-400' },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-[#1e1c32] border border-slate-700/50 rounded-xl p-4">
-            <stat.icon size={18} className={`${stat.color} mb-2`} />
-            <div className="text-2xl font-bold text-white">{stat.value}</div>
-            <div className="text-slate-400 text-xs mt-0.5">{stat.label}</div>
+          <Link
+            href="/upload"
+            className="plasma-button plasma-button-secondary inline-flex items-center gap-2 self-start rounded-full px-6 py-3 text-sm font-medium text-[#041102] transition-transform hover:scale-[1.01]"
+          >
+            <Plus size={16} />
+            New project
+          </Link>
+        </div>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            {
+              label: "Projects",
+              value: projects.length,
+              icon: FolderOpen,
+              tone: "text-[#69FF97]",
+            },
+            {
+              label: "Meetings",
+              value: totalMeetings,
+              icon: FileText,
+              tone: "text-[#00E4FF]",
+            },
+            {
+              label: "Action Items",
+              value: totalActionItems,
+              icon: CheckSquare,
+              tone: "text-[#9affba]",
+            },
+            {
+              label: "Decisions",
+              value: totalDecisions,
+              icon: TrendingUp,
+              tone: "text-[#d5f5dc]",
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="rounded-[24px] border border-[#26a269]/12 bg-[#0a1406]/72 p-5"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-[0.18em] text-[#70907a]">
+                  {stat.label}
+                </span>
+                <stat.icon size={16} className={stat.tone} />
+              </div>
+              <div className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-[#f6fff7]">
+                {stat.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {projects.length === 0 ? (
+        <section className="rounded-[32px] border border-[#26a269]/14 bg-[#081004]/72 px-6 py-16 text-center shadow-[0_25px_70px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-8">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#26a269]/16 bg-[#0d1808] text-[#69FF97]">
+            <FolderOpen size={28} />
           </div>
-        ))}
-      </div>
-*/}
-      {/* Empty state */}
-      {projects.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-600/10 border border-indigo-600/20 flex items-center justify-center mb-4">
-            <FolderOpen size={28} className="text-indigo-400" />
-          </div>
-          <h2 className="text-white font-semibold text-lg mb-2">
+          <h2 className="mt-6 text-2xl font-semibold text-[#f6fff7]">
             No projects yet
           </h2>
-          <p className="text-slate-400 text-sm mb-6 max-w-xs">
-            Create your first project by uploading a meeting transcript
+          <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#8fb79a]">
+            Create your first project by uploading a transcript. From there you
+            can extract decisions, track action items, and open dedicated chat
+            threads around the meeting context.
           </p>
           <Link
             href="/upload"
-            className="bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium px-6 py-2.5 rounded-xl transition-colors"
+            className="plasma-button plasma-button-primary mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white transition-transform hover:scale-[1.01]"
           >
             Upload your first transcript
+            <ArrowRight size={15} />
           </Link>
-        </div>
-      )}
+        </section>
+      ) : (
+        <section>
+          <div className="mb-5 flex items-end justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-semibold text-[#f6fff7]">
+                Your Projects
+              </h2>
+              <p className="mt-1 text-sm text-[#8fb79a]">
+                {projects.length} project{projects.length !== 1 ? "s" : ""} in
+                this workspace
+              </p>
+            </div>
+          </div>
 
-      {/* Project grid */}
-      {projects.length > 0 && (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <Link
-              key={project.id}
-              href={`/projects/${project.id}`}
-              className="bg-[#1e1c32] border border-slate-700/50 hover:border-indigo-500/50 rounded-xl p-5 transition-all hover:bg-[#252340] group"
-            >
-              {/* Project header */}
-              <div className="flex items-start justify-between mb-4">
-                <div className="w-10 h-10 rounded-lg bg-indigo-600/20 flex items-center justify-center">
-                  <FolderOpen size={18} className="text-indigo-400" />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {projects.map((project) => (
+              <Link
+                key={project.id}
+                href={`/projects/${project.id}`}
+                className="group rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)] transition-all hover:border-[#26a269]/26 hover:bg-[#0b1507]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#26a269]/16 bg-[#0d1808] text-[#69FF97]">
+                    <FolderOpen size={18} />
+                  </div>
+                  <span className="text-xs text-[#70907a]">
+                    {formatDate(project.createdAt)}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500">
-                  {formatDate(project.createdAt)}
-                </span>
-              </div>
 
-              <h3 className="font-semibold text-white mb-1 group-hover:text-indigo-300 transition-colors">
-                {project.name}
-              </h3>
+                <h3 className="mt-5 text-lg font-semibold text-[#f6fff7] transition-colors group-hover:text-[#69FF97]">
+                  {project.name}
+                </h3>
 
-              {/* Stats */}
-              <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-700/50">
-                <div className="text-center">
-                  <div className="text-lg font-bold text-white">
-                    {project.meetingCount}
+                <div className="mt-6 grid grid-cols-3 gap-3 border-t border-[#26a269]/10 pt-4">
+                  <div>
+                    <p className="text-2xl font-semibold text-[#f6fff7]">
+                      {project.meetingCount}
+                    </p>
+                    <p className="mt-1 text-xs text-[#70907a]">meetings</p>
                   </div>
-                  <div className="text-xs text-slate-500">meetings</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-white">
-                    {project.totalActionItems}
+                  <div>
+                    <p className="text-2xl font-semibold text-[#f6fff7]">
+                      {project.totalActionItems}
+                    </p>
+                    <p className="mt-1 text-xs text-[#70907a]">actions</p>
                   </div>
-                  <div className="text-xs text-slate-500">actions</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-white">
-                    {project.totalDecisions}
+                  <div>
+                    <p className="text-2xl font-semibold text-[#f6fff7]">
+                      {project.totalDecisions}
+                    </p>
+                    <p className="mt-1 text-xs text-[#70907a]">decisions</p>
                   </div>
-                  <div className="text-xs text-slate-500">decisions</div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

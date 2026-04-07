@@ -1,6 +1,6 @@
 // app/api/chats/route.ts
-// GET  ?meetingId=xxx  — list all chats whose context includes this meeting
-// POST               — create a new chat (meeting-scoped or project-scoped)
+// GET  — list chats filtered by meetingId, projectId, and/or scope
+// POST — create a new chat (meeting-scoped or project-scoped)
 
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -23,12 +23,7 @@ export async function GET(req: Request) {
     const meetingId = searchParams.get("meetingId");
     const projectId = searchParams.get("projectId");
 
-    if (!meetingId && !projectId) {
-      return NextResponse.json(
-        { success: false, error: "meetingId or projectId is required" },
-        { status: 400 },
-      );
-    }
+    const scope = searchParams.get("scope");
 
     const user = await prisma.user.findUnique({ where: { clerkUserId } });
     if (!user)
@@ -37,23 +32,40 @@ export async function GET(req: Request) {
         { status: 404 },
       );
 
-    const chats = await prisma.chat.findMany({
-      where: meetingId
+    const where = meetingId
+      ? {
+          contexts: { some: { meetingId } },
+          project: { ownerId: user.id },
+          ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
+        }
+      : projectId
         ? {
-            contexts: { some: { meetingId } },
+            projectId,
             project: { ownerId: user.id },
+            ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
           }
         : {
-            projectId: projectId!,
             project: { ownerId: user.id },
-          },
+            ...(scope === "MEETING" || scope === "PROJECT" ? { scope } : {}),
+          };
+
+    const chats = await prisma.chat.findMany({
+      where,
       include: {
         _count: { select: { messages: true } },
         contexts: {
           include: {
-            meeting: { select: { id: true, title: true, fileName: true } },
+            meeting: {
+              select: {
+                id: true,
+                title: true,
+                fileName: true,
+                createdAt: true,
+              },
+            },
           },
         },
+        project: { select: { id: true, name: true } },
       },
       orderBy: { updatedAt: "desc" },
     });
@@ -173,7 +185,14 @@ export async function POST(req: Request) {
         _count: { select: { messages: true } },
         contexts: {
           include: {
-            meeting: { select: { id: true, title: true, fileName: true } },
+            meeting: {
+              select: {
+                id: true,
+                title: true,
+                fileName: true,
+                createdAt: true,
+              },
+            },
           },
         },
       },

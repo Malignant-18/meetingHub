@@ -36,7 +36,14 @@ export async function GET(
         messages: { orderBy: { createdAt: "asc" } },
         contexts: {
           include: {
-            meeting: { select: { id: true, title: true, fileName: true } },
+            meeting: {
+              select: {
+                id: true,
+                title: true,
+                fileName: true,
+                createdAt: true,
+              },
+            },
           },
         },
       },

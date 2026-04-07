@@ -79,13 +79,14 @@ model Chat {
 }
 
 model ChatMessage {
-  id        String   @id @default(cuid())
-  chatId    String
-  role      String   // 'user' | 'assistant'
-  content   String
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  chatId     String
+  role       String   // 'user' | 'assistant'
+  content    String
+  references String?  // JSON: segment IDs Gemini cited e.g. ["clx123","clx456"]
+  createdAt  DateTime @default(now())
 
-  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chat       Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
 
   @@map("chat_messages")
 }

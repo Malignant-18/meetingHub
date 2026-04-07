@@ -1,0 +1,92 @@
+Meeting Intelligence Hub - Submission Checklist
+Date: 2026-04-07
+
+[x] Feature 1: Multi-transcript ingestion portal
+[x] Upload supports .txt and .vtt
+[x] Drag-and-drop / browse multiple files
+[x] File type validation with error feedback
+[x] Transcripts organized under projects
+[x] Existing project or new project upload flow
+[x] Upload summary shown per file
+[x] Meeting metadata captured: speaker count, word count, segment count
+[ ] Detected meeting date extraction is not clearly implemented end-to-end in upload summary
+
+[x] Feature 2: Decision and Action Item Extractor
+[x] Gemini-based extraction implemented
+[x] Decisions separated from action items
+[x] Meeting detail view shows structured decisions/action items table
+[x] Project-level decision/action rollup implemented
+[ ] CSV/PDF export for decisions/action items not implemented
+
+[x] Feature 3: Contextual Query Engine (Chatbot)
+[x] Chatbot works for meeting context
+[x] Dedicated /chat workspace implemented
+[x] Sidebar shows meeting chats and project chats
+[x] Chat supports source references
+[x] References map back to transcript segments
+[x] Project chat support implemented across multiple meetings
+[~] Chat UX is implemented and significantly improved, but still needs final polish/testing
+
+[x] Feature 4: Speaker Sentiment and Tone Analysis
+[x] Meeting-level sentiment analysis implemented
+[x] Project-level sentiment summary implemented
+[x] Per-speaker sentiment breakdown implemented
+[x] Transcript/source panel for flagged sections implemented
+[x] Visual dashboard components exist
+[x] Recharts added/used on project page
+[~] Visualizations can be improved further for richer timeline-style sentiment views
+
+[x] Minimum expectation 1: Dashboard home page
+[x] Dashboard lists uploaded projects
+[x] Dashboard shows quick stats
+[~] "Overall sentiment score" is not clearly surfaced as a single dashboard KPI
+
+[x] Minimum expectation 2: Upload interface
+[x] Clean multi-step upload flow
+[x] Validation feedback present
+[x] Upload progress/status per file present
+
+[x] Minimum expectation 3: Meeting detail view
+[x] Decisions and action items table present
+[x] Sentiment visualization present
+[x] Chat interface accessible for meeting context
+[~] Chat is now routed through /chat instead of embedded as the primary panel on the meeting page
+
+[x] Minimum expectation 4: Chatbot panel
+[x] Messaging-style interface exists
+[x] AI answers shown in chat thread
+[x] Source citations shown
+
+Pending polish before/demo during submission
+[ ] Full regression test across /dashboard, /upload, /projects/[id], /projects/[id]/meetings/[meetingId], /chat, /chat/[id]
+[ ] Verify no remaining Clerk/dev/build/runtime issues
+[ ] Verify Gemini model/env on final deployment
+[ ] Verify Prisma DB schema is synced in target environment
+[ ] Check responsive layout on mobile/tablet/desktop
+[ ] Final copy cleanup / wording consistency
+
+Not done
+[ ] Export decisions/action items as CSV
+[ ] Export decisions/action items as PDF
+[ ] Strong transcript meeting-date extraction and display in upload summaries
+[ ] Global dashboard-level overall sentiment KPI
+[ ] Final production hardening / exhaustive QA
+
+Way forward today
+1. Run a fast end-to-end smoke test on the five core routes:
+   /dashboard
+   /upload
+   /projects/[id]
+   /projects/[id]/meetings/[meetingId]
+   /chat/[id]
+2. Verify one complete happy path:
+   create/upload project -> open meeting -> run extraction -> run sentiment -> ask chat question with citations
+3. If time is limited, prioritize fixing only blockers:
+   runtime errors, broken navigation, failed API routes, broken DB writes
+4. If no blocker remains, submit with clear note:
+   export features and some final polish are pending, but core end-to-end workflow is implemented
+
+Recommended submission framing
+- Core upload, analysis, sentiment, and chat workflow is complete
+- Project-level aggregation and dedicated chat workspace are implemented
+- Some stretch/polish items remain, mainly exports and final QA

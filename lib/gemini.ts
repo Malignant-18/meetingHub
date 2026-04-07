@@ -11,7 +11,7 @@ const getClient = () => {
   return new GoogleGenerativeAI(apiKey);
 };
 
-// Default to a current stable Flash model and allow overrides per environment.
+// Use flash for speed + cost efficiency; switch to pro for higher quality
 const MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -36,7 +36,7 @@ export interface SentimentSegment {
   segment: string;
   sentiment: "positive" | "neutral" | "negative" | "conflict";
   score: number;
-  time_label: "early" | "mid" | "late";
+  time_label: string;
 }
 
 // ─── Decision + Action Item Extraction ────────────────────────────────────
@@ -47,8 +47,8 @@ export async function extractDecisionsAndActions(
   const model = genAI.getGenerativeModel({
     model: MODEL,
     generationConfig: {
-      responseMimeType: "application/json",
-      temperature: 0.1,
+      responseMimeType: "application/json", // forces pure JSON output — no markdown fences
+      temperature: 0.1, // low temp for factual extraction
     },
   });
 
@@ -88,6 +88,8 @@ ${transcriptText}`;
 
   const result = await model.generateContent(prompt);
   const text = result.response.text().trim();
+
+  // Strip any stray markdown fences just in case
   const clean = text
     .replace(/^```json\s*/i, "")
     .replace(/\s*```$/i, "")
@@ -101,7 +103,7 @@ ${transcriptText}`;
         ? parsed.action_items
         : [],
     };
-  } catch {
+  } catch (e) {
     console.error("[gemini] JSON parse error. Raw response:", text);
     throw new Error(
       "Gemini returned malformed JSON. Try re-running the analysis.",
@@ -171,7 +173,6 @@ ${transcriptText}`;
   try {
     const parsed = JSON.parse(clean);
     if (!Array.isArray(parsed)) throw new Error("Expected array");
-
     return parsed.map((item: any) => ({
       speaker: String(item.speaker ?? "Unknown"),
       segment: String(item.segment ?? ""),
@@ -185,7 +186,7 @@ ${transcriptText}`;
         ? item.time_label
         : "mid") as SentimentSegment["time_label"],
     }));
-  } catch {
+  } catch (e) {
     console.error("[gemini] Sentiment JSON parse error. Raw:", text);
     throw new Error(
       "Gemini returned malformed JSON for sentiment. Try re-running.",
@@ -194,22 +195,43 @@ ${transcriptText}`;
 }
 
 // ─── Chatbot Query ─────────────────────────────────────────────────────────
+export interface ChatbotResponse {
+  answer: string;
+  references: string[]; // segment IDs Gemini cited
+}
+
 export async function queryChatbot(
   question: string,
-  transcriptContext: string,
+  transcriptContext: string, // already contains [seg_ID] prefixes
   conversationHistory: { role: "user" | "model"; parts: string }[],
-): Promise<string> {
+): Promise<ChatbotResponse> {
   const genAI = getClient();
-  const model = genAI.getGenerativeModel({ model: MODEL });
+  const model = genAI.getGenerativeModel({
+    model: MODEL,
+    generationConfig: {
+      responseMimeType: "application/json",
+      temperature: 0.3,
+    },
+  });
 
-  const systemContext = `You are an intelligent meeting assistant. You have access to the following meeting transcripts and must answer questions based only on this content.
+  const systemContext = `You are an intelligent meeting assistant. You have access to meeting transcripts where each line is prefixed with a segment ID like [seg_clx123abc].
 
-Always cite your sources by mentioning the speaker name and approximate context (e.g., "According to John in the early part of the meeting...").
+RULES:
+- Answer questions based ONLY on the transcript content provided
+- Always cite the speaker name in your answer (e.g. "According to Sarah...")
+- In the references array, include the segment IDs of the lines you used to answer
+- Copy segment IDs EXACTLY as they appear — do not modify or invent them
+- If a question cannot be answered from the transcripts, say so clearly
+- Keep answers concise and factual
+
+Return ONLY this JSON structure (no markdown, no explanation):
+{
+  "answer": "your answer here",
+  "references": ["seg_clx123", "seg_clx456"]
+}
 
 MEETING TRANSCRIPTS:
-${transcriptContext}
-
----`;
+${transcriptContext}`;
 
   const chat = model.startChat({
     history: conversationHistory.map((m) => ({
@@ -223,5 +245,22 @@ ${transcriptContext}
   });
 
   const result = await chat.sendMessage(question);
-  return result.response.text();
+  const text = result.response.text().trim();
+  const clean = text
+    .replace(/^```json\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  try {
+    const parsed = JSON.parse(clean);
+    return {
+      answer: String(parsed.answer ?? text),
+      references: Array.isArray(parsed.references)
+        ? parsed.references.filter((r: any) => typeof r === "string")
+        : [],
+    };
+  } catch {
+    // Fallback: treat entire response as plain answer with no references
+    return { answer: text, references: [] };
+  }
 }
