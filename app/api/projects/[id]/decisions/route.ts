@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { extractDecisionsAndActions } from "@/lib/gemini";
 import { prisma } from "@/lib/prisma";
+import { getOrSyncUser } from "@/lib/auth-user";
 import {
   buildTranscriptText,
   summarizeProjectDecisions,
@@ -23,13 +24,7 @@ export async function POST(
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { clerkUserId } });
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 },
-      );
-    }
+    const user = await getOrSyncUser(clerkUserId);
 
     const project = await prisma.project.findFirst({
       where: { id: params.id, ownerId: user.id },

@@ -20,14 +20,6 @@ export default function SentimentButton({ meetingId, hasResults }: Props) {
     setLoading(true);
     const toastId = toast.loading(
       "Sending transcript to Gemini for sentiment analysis…",
-      {
-        style: {
-          background: "#1e1c32",
-          color: "#e0e7ff",
-          border: "1px solid #4338ca",
-          borderRadius: "10px",
-        },
-      },
     );
 
     try {
@@ -54,24 +46,18 @@ export default function SentimentButton({ meetingId, hasResults }: Props) {
 
   if (hasResults) {
     return (
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-sm text-emerald-400">
-          <CheckCircle size={14} />
-          Sentiment analyzed
-        </div>
-        <button
-          onClick={handleRun}
-          disabled={loading}
-          className="flex items-center gap-2 border border-slate-600 hover:border-purple-500 text-slate-300 hover:text-white text-sm px-4 py-2 rounded-xl transition-all disabled:opacity-50"
-        >
-          {loading ? (
-            <Loader2 size={14} className="animate-spin" />
-          ) : (
-            <RefreshCw size={14} />
-          )}
-          Re-analyze
-        </button>
-      </div>
+      <button
+        onClick={handleRun}
+        disabled={loading}
+        className="plasma-button plasma-button-outline inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-white transition-transform hover:scale-[1.01] disabled:opacity-50"
+      >
+        {loading ? (
+          <Loader2 size={15} className="animate-spin" />
+        ) : (
+          <RefreshCw size={15} />
+        )}
+        Re-analyze sentiment
+      </button>
     );
   }
 
@@ -79,7 +65,7 @@ export default function SentimentButton({ meetingId, hasResults }: Props) {
     <button
       onClick={handleRun}
       disabled={loading}
-      className="flex items-center gap-2 bg-purple-700 hover:bg-purple-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-purple-900/40"
+      className="plasma-button plasma-button-secondary inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-[#041102] transition-transform hover:scale-[1.01] disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {loading ? (
         <>

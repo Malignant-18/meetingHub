@@ -97,7 +97,8 @@ export const Plasma = ({
   const mousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    if (!containerRef.current) return;
+    const container = containerRef.current;
+    if (!container) return;
 
     const useCustomColor = color ? 1.0 : 0.0;
     const customColorRgb = color ? hexToRgb(color) : [1, 1, 1];
@@ -115,7 +116,7 @@ export const Plasma = ({
     canvas.style.display = "block";
     canvas.style.width = "100%";
     canvas.style.height = "100%";
-    containerRef.current.appendChild(canvas);
+    container.appendChild(canvas);
 
     const geometry = new Triangle(gl);
 
@@ -139,8 +140,8 @@ export const Plasma = ({
     const mesh = new Mesh(gl, { geometry, program });
 
     const handleMouseMove = (e) => {
-      if (!mouseInteractive) return;
-      const rect = containerRef.current.getBoundingClientRect();
+      if (!mouseInteractive || !container.isConnected) return;
+      const rect = container.getBoundingClientRect();
       mousePos.current.x = e.clientX - rect.left;
       mousePos.current.y = e.clientY - rect.top;
       const mouseUniform = program.uniforms.uMouse.value;
@@ -149,11 +150,12 @@ export const Plasma = ({
     };
 
     if (mouseInteractive) {
-      containerRef.current.addEventListener("mousemove", handleMouseMove);
+      container.addEventListener("mousemove", handleMouseMove);
     }
 
     const setSize = () => {
-      const rect = containerRef.current.getBoundingClientRect();
+      if (!container.isConnected) return;
+      const rect = container.getBoundingClientRect();
       const width = Math.max(1, Math.floor(rect.width));
       const height = Math.max(1, Math.floor(rect.height));
       renderer.setSize(width, height);
@@ -163,7 +165,7 @@ export const Plasma = ({
     };
 
     const ro = new ResizeObserver(setSize);
-    ro.observe(containerRef.current);
+    ro.observe(container);
     setSize();
 
     let raf = 0;
@@ -192,12 +194,13 @@ export const Plasma = ({
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
-      if (mouseInteractive && containerRef.current) {
-        containerRef.current.removeEventListener("mousemove", handleMouseMove);
+      if (mouseInteractive) {
+        container.removeEventListener("mousemove", handleMouseMove);
       }
       try {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        containerRef.current?.removeChild(canvas);
+        if (container.contains(canvas)) {
+          container.removeChild(canvas);
+        }
       } catch {
         console.warn("Canvas already removed from container");
       }

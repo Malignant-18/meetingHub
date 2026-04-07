@@ -14,7 +14,7 @@ export default function SignInPage() {
             Welcome back
           </div>
           <h1 className="mt-6 text-3xl font-semibold tracking-[-0.04em] text-[#f6fff7]">
-            Sign in to MeetingHub
+            Sign in to Mr.Minutes
           </h1>
           <p className="mt-2 text-sm leading-6 text-[#a4c9ac]">
             Continue from your dashboard and pick up the next meeting right

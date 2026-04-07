@@ -26,6 +26,7 @@ interface FileWithStatus {
   error?: string;
   result?: {
     meetingId: string;
+    meetingDate: string | null;
     speakerCount: number;
     wordCount: number;
     speakers: string[];
@@ -42,6 +43,19 @@ interface ExistingProject {
 }
 
 type Step = 1 | 2;
+
+function formatMeetingDate(value: string | null | undefined) {
+  if (!value) return "Date not detected";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Date not detected";
+
+  return parsed.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 export default function UploadForm() {
   const router = useRouter();
@@ -459,6 +473,9 @@ export default function UploadForm() {
                     </p>
                     <p className="mt-1 text-xs text-[#70907a]">
                       {formatFileSize(item.file.size)}
+                      {item.status === "success" && item.result
+                        ? ` · ${formatMeetingDate(item.result.meetingDate)}`
+                        : ""}
                     </p>
                   </div>
 

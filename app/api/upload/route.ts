@@ -105,6 +105,7 @@ export async function POST(req: Request) {
         data: {
           projectId,
           title,
+          meetingDate: parsed.meetingDate ? new Date(parsed.meetingDate) : null,
           fileName: file.name,
           fileUrl,
           speakerCount: parsed.speakerCount,
@@ -143,6 +144,7 @@ export async function POST(req: Request) {
           wordCount: parsed.wordCount,
           segmentCount: parsed.segments.length,
           speakers: parsed.speakers,
+          meetingDate: meeting.meetingDate,
           fileUrl,
         },
       },

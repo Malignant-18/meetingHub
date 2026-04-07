@@ -1,0 +1,80 @@
+WEBVTT
+
+NOTE Meeting Date: April 7 2026
+NOTE Topic: AfterWatch app launch review
+NOTE Started at 14:00
+
+00:00:00.000 --> 00:00:09.000
+<v Aisha> Thanks everyone for joining two hours after launch. AfterWatch is live, installs are coming in, and I want a fast read on product, tech, and public reaction.
+
+00:00:09.500 --> 00:00:18.000
+<v Rahul> On the product side, onboarding completion is at sixty eight percent, which is better than beta, but the watchlist import screen is still causing hesitation for first-time users.
+
+00:00:18.500 --> 00:00:27.000
+<v Nisha> Public opinion is mixed but encouraging. Early users on X love the fast ratings flow and poster design, though several people are confused about the difference between lists and diary entries.
+
+00:00:27.500 --> 00:00:36.000
+<v Vikram> Engineering saw one real issue in production. Push notifications are delayed for some Android devices because the queue worker autoscaled slower than expected.
+
+00:00:36.500 --> 00:00:45.000
+<v Omar> Backend latency is stable overall. Read traffic is fine, but recommendation requests spiked beyond forecast during the first influencer mention and one pod hit eighty five percent CPU.
+
+00:00:45.500 --> 00:00:54.000
+<v Priya> Brand sentiment is strongest around the phrase rate what you just watched. That message is landing. The current App Store screenshots are weaker than the landing page, though.
+
+00:00:54.500 --> 00:01:03.000
+<v Elena> Support tickets are still manageable. Most of them are about passwordless login codes arriving late, and a smaller batch is asking whether imported ratings from Letterboxd are permanent.
+
+00:01:03.500 --> 00:01:12.000
+<v Daniel> Data quality looks good. No corruption in rating writes so far, but I am seeing duplicate anonymous session events from one analytics hook on the explore tab.
+
+00:01:12.500 --> 00:01:21.000
+<v Mei> Design feedback is positive on dark mode cards and critic score chips. The one repeated criticism is that the follow button is too subtle and easy to miss on creator profiles.
+
+00:01:21.500 --> 00:01:30.000
+<v Aisha> Okay, first decision: we do not hotfix the full onboarding today unless it is breaking. We focus on launch stability, messaging clarity, and one or two visible wins.
+
+00:01:30.500 --> 00:01:39.000
+<v Vikram> Agreed. The notification delay is worth a patch today. I can increase the minimum worker count and tighten the autoscaling threshold within the next forty five minutes.
+
+00:01:39.500 --> 00:01:48.000
+<v Omar> If we expect evening traffic, I also want to pre-scale the recommendation service and add one more read replica before prime time. That will buy us headroom.
+
+00:01:48.500 --> 00:01:57.000
+<v Nisha> From the community side, people are already posting first lists publicly. The tone is enthusiastic, but confusion around diary entries versus lists will keep surfacing unless we explain it today.
+
+00:01:57.500 --> 00:02:06.000
+<v Priya> Then second decision: we publish a short launch thread and in-app tooltip copy that explains lists, diary entries, and imports in plain language by tonight.
+
+00:02:06.500 --> 00:02:15.000
+<v Mei> I can prepare the tooltip and App Store screenshot revisions. The tooltip can be ready in two hours, but the screenshot set will need final polish by tomorrow morning.
+
+00:02:15.500 --> 00:02:24.000
+<v Elena> Support would benefit from that immediately. I also want a one-page macro set for the top five questions so the team answers consistently before the US evening wave starts.
+
+00:02:24.500 --> 00:02:33.000
+<v Daniel> Third decision from my side: we freeze nonessential analytics experiments for twenty four hours. The duplicate event issue is not fatal, but new flags will muddy the launch readout.
+
+00:02:33.500 --> 00:02:42.000
+<v Rahul> I support that. We need a clean view of retention and completion. Also, future roadmap wise, users are already asking for spoiler-safe reviews and friend activity feeds.
+
+00:02:42.500 --> 00:02:51.000
+<v Aisha> Good. We will not commit new features publicly today, but we should capture spoiler controls, richer profile activity, and creator lists as immediate post-launch candidates.
+
+00:02:51.500 --> 00:03:00.000
+<v Omar> One concern: if the influencer campaign continues, recommendation load could triple tonight. Without pre-scaling, users may feel the app is slow right when word of mouth peaks.
+
+00:03:00.500 --> 00:03:09.000
+<v Vikram> I will pair with Omar on that. We can push the worker scaling change now and raise alert sensitivity for queue delay, API p95, and database connections before 17:00.
+
+00:03:09.500 --> 00:03:18.000
+<v Priya> Brand-wise, the public likes that AfterWatch feels faster and less intimidating than larger review apps. We should reinforce that simple opinion, instant capture position.
+
+00:03:18.500 --> 00:03:27.000
+<v Nisha> There is one negative thread claiming the launch feels rushed because sign-in lagged. It is small, but if login email delays continue, that could become a louder trust issue.
+
+00:03:27.500 --> 00:03:36.000
+<v Elena> Then I need a committed owner for passwordless delays. Support can hold the line for now, but if codes still lag by this evening, we need a status banner and a fallback message.
+
+00:03:36.500 --> 00:03:45.000
+<v Aisha> Final action summary: Vikram and Omar patch scaling before 17:00, Priya and Mei publish clarity messaging tonight, Elena drafts support macros in one hour, Daniel fixes duplicate analytics by tomorrow noon, and Rahul compiles launch feedback themes for tomorrow’s debrief.

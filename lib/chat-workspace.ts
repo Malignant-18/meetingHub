@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/prisma";
+import { getOrSyncUser } from "@/lib/auth-user";
 
 export async function getUserByClerkId(clerkUserId: string) {
-  return prisma.user.findUnique({ where: { clerkUserId } });
+  return getOrSyncUser(clerkUserId);
 }
 
 export async function getChatSidebarData(userId: string) {

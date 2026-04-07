@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 
 import Plasma from "@/components/Plasma";
+import { DASHBOARD_TOUR_SESSION_KEY } from "@/components/DashboardOnboarding";
 
 const navLinks = [
   { href: "/dashboard", label: "Home" },
@@ -11,6 +13,10 @@ const navLinks = [
 ];
 
 export default function LandingHero() {
+  useEffect(() => {
+    window.sessionStorage.removeItem(DASHBOARD_TOUR_SESSION_KEY);
+  }, []);
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#050a00] text-[#d5f5dc]">
       <div className="absolute inset-0 overflow-hidden opacity-60">
@@ -33,10 +39,10 @@ export default function LandingHero() {
               href="/"
               className="text-lg font-semibold tracking-tight text-[#f3fff5]"
             >
-              MeetingHub
+              Mr.Minutes
             </Link>
 
-            <nav className="hidden items-center gap-2 rounded-full border border-[#26a269]/10 bg-[#0d1808]/70 px-2 py-2 md:flex">
+            <nav className="hidden items-center gap-2 rounded-full   px-2 py-2 md:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.label}
@@ -74,7 +80,7 @@ export default function LandingHero() {
               </div>
 
               <h1 className="mt-8 text-5xl font-semibold leading-[0.96] tracking-[-0.05em] text-[#f6fff7] sm:text-6xl lg:text-7xl">
-                MeetingHub
+                Mr.Minutes
               </h1>
 
               <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-[#a4c9ac] sm:text-xl">

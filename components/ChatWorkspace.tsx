@@ -521,10 +521,10 @@ export default function ChatWorkspace({
             <div
               key={chat.id}
               className={cn(
-                "group relative border px-3 py-3 transition-colors cursor-pointer",
+                "group relative  px-3 py-3 transition-colors cursor-pointer",
                 active
-                  ? "border-[#26a269]/25 bg-[#0f1b0d]"
-                  : "border-slate-800 bg-[#081004]/70 hover:border-[#26a269]/18 hover:bg-[#0d1808]",
+                  ? " bg-[#0f1b0d]"
+                  : "bg-[#081004]/70  hover:bg-[#0d1808]",
               )}
               onClick={() => router.push(`/chat/${chat.id}`)}
             >
@@ -906,7 +906,7 @@ export default function ChatWorkspace({
                       <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border border-[#26a269]/20 bg-[#0d1808] text-[#9fd8ad]">
                         <Bot size={14} />
                       </div>
-                      <div className="border border-[#26a269]/14 bg-[#0a1406]/80 px-4 py-3">
+                      <div className="  bg-[#0a1406]/80 px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           {[0, 1, 2].map((i) => (
                             <div

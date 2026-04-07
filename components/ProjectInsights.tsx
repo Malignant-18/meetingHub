@@ -1,6 +1,7 @@
-'use client'
+"use client";
+// components/ProjectInsights.tsx
 
-import { useState } from 'react'
+import { useState } from "react";
 import {
   BrainCircuit,
   Calendar,
@@ -10,167 +11,138 @@ import {
   RefreshCw,
   TrendingUp,
   Users,
-} from 'lucide-react'
-
+} from "lucide-react";
 import {
   type ProjectDecisionSummary,
   type ProjectSentimentSummary,
-} from '@/lib/project-insights'
-import { cn, formatDate } from '@/lib/utils'
+} from "@/lib/project-insights";
+import { cn, formatDate } from "@/lib/utils";
 
-type Props = {
-  projectId: string
-  initialDecisions: ProjectDecisionSummary
-  initialSentiment: ProjectSentimentSummary
+interface Props {
+  projectId: string;
+  initialDecisions: ProjectDecisionSummary;
+  initialSentiment: ProjectSentimentSummary;
 }
 
-const sentimentToneStyles = {
-  positive: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20',
-  neutral: 'bg-slate-500/15 text-slate-300 border border-slate-500/20',
-  negative: 'bg-amber-500/15 text-amber-300 border border-amber-500/20',
-  conflict: 'bg-red-500/15 text-red-300 border border-red-500/20',
-  no_data: 'bg-slate-700/40 text-slate-300 border border-slate-600/30',
-} as const
+const SENTIMENT_PILL = {
+  positive: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+  neutral: "bg-slate-500/15 text-slate-300 border border-slate-500/20",
+  negative: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
+  conflict: "bg-red-500/15 text-red-300 border border-red-500/20",
+  no_data: "bg-[#26a269]/10 text-[#9fd8ad] border border-[#26a269]/20",
+} as const;
 
-const sentimentBarStyles = {
-  positive: 'bg-emerald-400',
-  neutral: 'bg-slate-400',
-  negative: 'bg-amber-400',
-  conflict: 'bg-red-400',
-} as const
+const SENTIMENT_BAR = {
+  positive: "bg-emerald-400",
+  neutral: "bg-slate-400",
+  negative: "bg-amber-400",
+  conflict: "bg-red-400",
+} as const;
 
 export default function ProjectInsights({
   projectId,
   initialDecisions,
   initialSentiment,
 }: Props) {
-  const [decisions, setDecisions] = useState(initialDecisions)
-  const [sentiment, setSentiment] = useState(initialSentiment)
-  const [runningDecisionAnalysis, setRunningDecisionAnalysis] = useState(false)
-  const [runningSentimentAnalysis, setRunningSentimentAnalysis] = useState(false)
-  const [decisionError, setDecisionError] = useState<string | null>(null)
-  const [sentimentError, setSentimentError] = useState<string | null>(null)
+  const [decisions, setDecisions] = useState(initialDecisions);
+  const [sentiment, setSentiment] = useState(initialSentiment);
+  const [runningDecisions, setRunningDecisions] = useState(false);
+  const [runningSentiment, setRunningSentiment] = useState(false);
+  const [decisionsError, setDecisionsError] = useState<string | null>(null);
+  const [sentimentError, setSentimentError] = useState<string | null>(null);
 
-  const runDecisionAnalysis = async () => {
+  const runDecisions = async () => {
+    setRunningDecisions(true);
+    setDecisionsError(null);
     try {
-      setRunningDecisionAnalysis(true)
-      setDecisionError(null)
-
-      const response = await fetch(`/api/projects/${projectId}/decisions`, {
-        method: 'POST',
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.error ?? 'Decision extraction failed')
-      }
-
-      setDecisions(payload.data)
-    } catch (error: any) {
-      setDecisionError(error.message ?? 'Decision extraction failed')
+      const res = await fetch(`/api/projects/${projectId}/decisions`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error ?? "Failed");
+      setDecisions(data.data);
+    } catch (e: any) {
+      setDecisionsError(e.message);
     } finally {
-      setRunningDecisionAnalysis(false)
+      setRunningDecisions(false);
     }
-  }
+  };
 
-  const runSentimentAnalysis = async () => {
+  const runSentiment = async () => {
+    setRunningSentiment(true);
+    setSentimentError(null);
     try {
-      setRunningSentimentAnalysis(true)
-      setSentimentError(null)
-
-      const response = await fetch(`/api/projects/${projectId}/sentiment`, {
-        method: 'POST',
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.error ?? 'Sentiment analysis failed')
-      }
-
-      setSentiment(payload.data)
-    } catch (error: any) {
-      setSentimentError(error.message ?? 'Sentiment analysis failed')
+      const res = await fetch(`/api/projects/${projectId}/sentiment`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error ?? "Failed");
+      setSentiment(data.data);
+    } catch (e: any) {
+      setSentimentError(e.message);
     } finally {
-      setRunningSentimentAnalysis(false)
+      setRunningSentiment(false);
     }
-  }
+  };
 
   return (
-    <div className="mt-12 grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-      <section className="rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+    <div className="mt-10 grid gap-5 ">
+      {/* ── Decisions panel ── */}
+      <section className="rounded-[28px] border border-[#26a269]/20 bg-[#081004]/80 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.20)] backdrop-blur-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[#69FF97] text-sm font-medium">
-              <BrainCircuit size={16} />
-              Decision Extractor
+            <div className="flex items-center gap-2 text-sm font-medium text-[#69FF97]">
+              <BrainCircuit size={15} />
+              Decision extractor
             </div>
-            <h2 className="text-[#f6fff7] text-xl font-semibold mt-2">
-              Decisions and action items across the project
+            <h2 className="mt-2 text-lg font-semibold text-[#f6fff7]">
+              Decisions &amp; action items
             </h2>
-            <p className="text-[#8fb79a] text-sm mt-1">
-              Re-run extraction whenever new transcripts land or existing meetings change.
-            </p>
           </div>
-
           <button
-            onClick={runDecisionAnalysis}
-            disabled={runningDecisionAnalysis}
-            className="plasma-button plasma-button-secondary inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-[#041102] transition-transform hover:scale-[1.01] disabled:opacity-60"
+            onClick={runDecisions}
+            disabled={runningDecisions}
+            className="inline-flex items-center gap-2 rounded-full bg-[#26a269] px-4 py-2.5 text-sm font-medium text-[#041102] transition-colors hover:bg-[#30bb77] disabled:opacity-50 flex-shrink-0"
           >
-            {runningDecisionAnalysis ? (
-              <Loader2 size={16} className="animate-spin" />
+            {runningDecisions ? (
+              <Loader2 size={14} className="animate-spin" />
             ) : (
-              <RefreshCw size={16} />
+              <RefreshCw size={14} />
             )}
-            {decisions.totalDecisions > 0 ? 'Refresh extractor' : 'Run extractor'}
+            {decisions.totalDecisions > 0 ? "Refresh" : "Run extractor"}
           </button>
         </div>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <InsightStat
-            icon={TrendingUp}
-            label="Decisions"
-            value={decisions.totalDecisions}
-            color="text-indigo-300"
-          />
-          <InsightStat
-            icon={CheckSquare}
-            label="Action items"
-            value={decisions.totalActionItems}
-            color="text-emerald-300"
-          />
-          <InsightStat
-            icon={Calendar}
-            label="Meetings covered"
-            value={decisions.meetingsCovered}
-            color="text-amber-300"
-          />
-        </div>
-
-        {decisionError && (
+        {decisionsError && (
           <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-            {decisionError}
+            {decisionsError}
           </p>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
-            <h3 className="text-[#f6fff7] font-medium mb-3">Project decisions</h3>
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          {/* Decisions list */}
+          <div className="rounded-[20px] border border-[#26a269]/20 bg-[#0a1406]/60 p-4">
+            <h3 className="text-sm font-medium text-[#f6fff7] mb-3">
+              Decisions
+            </h3>
             {decisions.decisions.length === 0 ? (
-              <EmptyState text="No extracted decisions yet. Run the extractor to generate them from all project meetings." />
+              <p className="text-xs text-[#70907a] leading-relaxed">
+                No decisions extracted yet. Run the extractor to pull them from
+                all meetings.
+              </p>
             ) : (
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {decisions.decisions.map((decision) => (
+              <div className="max-h-[320px] space-y-2.5 overflow-y-auto pr-1">
+                {decisions.decisions.map((d) => (
                   <div
-                    key={decision.id}
-                    className="rounded-xl border border-[#26a269]/10 bg-[#0d1808] p-3"
+                    key={d.id}
+                    className="rounded-xl border border-[#26a269]/15 bg-[#0d1808] p-3"
                   >
-                    <p className="text-sm text-[#d5f5dc] leading-relaxed">
-                      {decision.text}
+                    <p className="text-xs leading-relaxed text-[#d5f5dc]">
+                      {d.text}
                     </p>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-xs text-[#70907a]">
-                      <span>{decision.meetingTitle}</span>
-                      <span>{formatDate(decision.meetingCreatedAt)}</span>
+                    <div className="mt-2 flex items-center justify-between text-[10px] text-[#70907a]">
+                      <span>{d.meetingTitle}</span>
+                      <span>{formatDate(d.meetingCreatedAt)}</span>
                     </div>
                   </div>
                 ))}
@@ -178,29 +150,31 @@ export default function ProjectInsights({
             )}
           </div>
 
-          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
-            <h3 className="text-[#f6fff7] font-medium mb-3">Action tracker</h3>
+          {/* Action items list */}
+          <div className="rounded-[20px] border border-[#26a269]/20 bg-[#0a1406]/60 p-4">
+            <h3 className="text-sm font-medium text-[#f6fff7] mb-3">
+              Action tracker
+            </h3>
             {decisions.actionItems.length === 0 ? (
-              <EmptyState text="No action items are stored for this project yet." />
+              <p className="text-xs text-[#70907a] leading-relaxed">
+                No action items stored yet.
+              </p>
             ) : (
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {decisions.actionItems.map((item) => (
+              <div className="max-h-[320px] space-y-2.5 overflow-y-auto pr-1">
+                {decisions.actionItems.map((a) => (
                   <div
-                    key={item.id}
-                    className="rounded-xl border border-[#26a269]/10 bg-[#0d1808] p-3"
+                    key={a.id}
+                    className="rounded-xl border border-[#26a269]/15 bg-[#0d1808] p-3"
                   >
-                    <p className="text-sm text-[#d5f5dc] leading-relaxed">
-                      {item.task}
+                    <p className="text-xs leading-relaxed text-[#d5f5dc]">
+                      {a.task}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-[#8fb79a]">
-                      <span className="rounded-full bg-[#10200f] px-2 py-1">
-                        {item.meetingTitle}
+                    <div className="mt-2 flex flex-wrap gap-1.5 text-[10px]">
+                      <span className="rounded-full border border-[#26a269]/15 bg-[#10200f] px-2 py-0.5 text-[#9fd8ad]">
+                        {a.meetingTitle}
                       </span>
-                      <span className="rounded-full bg-[#10200f] px-2 py-1">
-                        Owner: {item.responsiblePerson || 'Unknown'}
-                      </span>
-                      <span className="rounded-full bg-[#10200f] px-2 py-1">
-                        Deadline: {item.deadline || 'Not specified'}
+                      <span className="rounded-full border border-[#26a269]/15 bg-[#10200f] px-2 py-0.5 text-[#9fd8ad]">
+                        {a.responsiblePerson ?? "Unknown"}
                       </span>
                     </div>
                   </div>
@@ -211,68 +185,30 @@ export default function ProjectInsights({
         </div>
       </section>
 
-      <section className="rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+      {/* ── Sentiment panel ── */}
+      <section className="rounded-[28px] border border-[#26a269]/20 bg-[#081004]/80 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.20)] backdrop-blur-xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2 text-[#00E4FF] text-sm font-medium">
-              <MessageSquareHeart size={16} />
-              Sentiment Dashboard
+            <div className="flex items-center gap-2 text-sm font-medium text-[#00E4FF]">
+              <MessageSquareHeart size={15} />
+              Sentiment dashboard
             </div>
-            <h2 className="text-[#f6fff7] text-xl font-semibold mt-2">
-              Speaker tone and meeting sentiment trends
+            <h2 className="mt-2 text-lg font-semibold text-[#f6fff7]">
+              Speaker tone trends
             </h2>
-            <p className="text-[#8fb79a] text-sm mt-1">
-              Analyze tone across transcripts to spot alignment, tension, and outliers.
-            </p>
           </div>
-
           <button
-            onClick={runSentimentAnalysis}
-            disabled={runningSentimentAnalysis}
-            className="plasma-button plasma-button-primary inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-white transition-transform hover:scale-[1.01] disabled:opacity-60"
+            onClick={runSentiment}
+            disabled={runningSentiment}
+            className="inline-flex items-center gap-2 rounded-full border border-[#26a269]/20 bg-[#0d1808] px-4 py-2.5 text-sm font-medium text-[#9fd8ad] transition-colors hover:border-[#26a269]/35 hover:text-[#d5f5dc] disabled:opacity-50 flex-shrink-0"
           >
-            {runningSentimentAnalysis ? (
-              <Loader2 size={16} className="animate-spin" />
+            {runningSentiment ? (
+              <Loader2 size={14} className="animate-spin" />
             ) : (
-              <RefreshCw size={16} />
+              <RefreshCw size={14} />
             )}
-            {sentiment.totalSegments > 0 ? 'Refresh sentiment' : 'Run sentiment'}
+            {sentiment.totalSegments > 0 ? "Refresh" : "Run sentiment"}
           </button>
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <InsightStat
-            icon={Users}
-            label="Speakers"
-            value={sentiment.speakerSummaries.length}
-            color="text-sky-300"
-          />
-          <InsightStat
-            icon={MessageSquareHeart}
-            label="Segments"
-            value={sentiment.totalSegments}
-            color="text-emerald-300"
-          />
-          <div className="rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
-            <div className="text-xs uppercase tracking-[0.18em] text-[#70907a]">
-              Overall tone
-            </div>
-            <div className="mt-3 flex items-center gap-3">
-              <span
-                className={cn(
-                  'rounded-full px-2.5 py-1 text-xs font-medium capitalize',
-                  sentimentToneStyles[sentiment.overallLabel]
-                )}
-              >
-                {sentiment.overallLabel === 'no_data'
-                  ? 'No data'
-                  : sentiment.overallLabel}
-              </span>
-              <span className="text-2xl font-bold text-[#f6fff7]">
-                {sentiment.overallAverageScore ?? '--'}
-              </span>
-            </div>
-          </div>
         </div>
 
         {sentimentError && (
@@ -281,146 +217,135 @@ export default function ProjectInsights({
           </p>
         )}
 
-        <div className="mt-6 rounded-[24px] bg-[#0a1406]/72 border border-[#26a269]/12 p-4">
-          <h3 className="text-[#f6fff7] font-medium">Speaker breakdown</h3>
-          {sentiment.speakerSummaries.length === 0 ? (
-            <div className="mt-3">
-              <EmptyState text="No sentiment data stored yet. Run the dashboard to create speaker summaries." />
-            </div>
-          ) : (
-            <div className="mt-4 space-y-4">
-              {sentiment.speakerSummaries.map((speaker) => (
-                <div key={speaker.speaker}>
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-white">
-                        {speaker.speaker}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {speaker.totalSegments} segments across {speaker.meetingCount}{' '}
-                        meeting{speaker.meetingCount !== 1 ? 's' : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-white">
-                        {speaker.averageScore}
-                      </p>
-                      <span
-                        className={cn(
-                          'inline-flex rounded-full px-2 py-1 text-[11px] font-medium capitalize',
-                          sentimentToneStyles[speaker.dominantLabel]
-                        )}
-                      >
-                        {speaker.dominantLabel}
-                      </span>
-                    </div>
-                  </div>
+        <div className="mt-5 grid grid-cols-1 lg:grid-cols-5 gap-4">
+          {/* Speaker breakdown */}
+          <div className="lg:col-span-3 rounded-[20px] border border-[#26a269]/20 bg-[#0a1406]/60 p-4">
+            <h3 className="text-sm font-medium text-[#f6fff7] mb-4">
+              Speaker breakdown
+            </h3>
 
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800">
-                    {(['positive', 'neutral', 'negative', 'conflict'] as const).map(
-                      (label) => {
-                        const count = speaker.distribution[label]
-                        const width =
+            {sentiment.speakerSummaries.length === 0 ? (
+              <p className="text-xs text-[#70907a] leading-relaxed">
+                No sentiment data yet. Run the dashboard to create speaker
+                summaries.
+              </p>
+            ) : (
+              <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1">
+                {sentiment.speakerSummaries.map((speaker) => (
+                  <div key={speaker.speaker}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-[#d5f5dc]">
+                          {speaker.speaker}
+                        </p>
+                        <p className="text-[11px] text-[#70907a]">
+                          {speaker.totalSegments} segments ·{" "}
+                          {speaker.meetingCount} meeting
+                          {speaker.meetingCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
+                            SENTIMENT_PILL[speaker.dominantLabel],
+                          )}
+                        >
+                          {speaker.dominantLabel}
+                        </span>
+
+                        <p className="mt-0.5 text-sm font-semibold text-[#f6fff7]">
+                          {speaker.averageScore}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 flex h-1.5 overflow-hidden rounded-full bg-[#0d1808]">
+                      {(
+                        ["positive", "neutral", "negative", "conflict"] as const
+                      ).map((label) => {
+                        const pct =
                           speaker.totalSegments > 0
-                            ? `${(count / speaker.totalSegments) * 100}%`
-                            : '0%'
+                            ? (speaker.distribution[label] /
+                                speaker.totalSegments) *
+                              100
+                            : 0;
 
                         return (
                           <div
                             key={label}
-                            className={cn(
-                              'h-full inline-block',
-                              sentimentBarStyles[label]
-                            )}
-                            style={{ width }}
+                            className={cn("h-full", SENTIMENT_BAR[label])}
+                            style={{ width: `${pct}%` }}
                           />
-                        )
-                      }
-                    )}
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div className="mt-4 rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-          <h3 className="text-white font-medium">Meeting timeline</h3>
-          {sentiment.meetingSummaries.length === 0 ? (
-            <div className="mt-3">
-              <EmptyState text="Sentiment trends will appear here once at least one meeting is analyzed." />
-            </div>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {sentiment.meetingSummaries.map((meeting) => (
-                <div key={meeting.meetingId}>
-                  <div className="flex items-center justify-between gap-3 text-sm">
-                    <div>
-                      <p className="text-white">{meeting.meetingTitle}</p>
-                      <p className="text-xs text-slate-500">
-                        {formatDate(meeting.createdAt)} · {meeting.segmentCount} analyzed
-                        {' '}segment{meeting.segmentCount !== 1 ? 's' : ''}
-                      </p>
+          {/* Meeting timeline */}
+          {sentiment.meetingSummaries.length > 0 && (
+            <div className="lg:col-span-2 rounded-[20px] border border-[#26a269]/20 bg-[#0a1406]/60 p-4">
+              <h3 className="text-sm font-medium text-[#f6fff7] mb-4">
+                Meeting timeline
+              </h3>
+
+              <div className="space-y-4">
+                {sentiment.meetingSummaries.map((m) => (
+                  <div key={m.meetingId}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-[#d5f5dc]">
+                          {m.meetingTitle}
+                        </p>
+
+                        <p className="text-[11px] text-[#70907a]">
+                          {formatDate(m.createdAt)} · {m.segmentCount} segments
+                        </p>
+                      </div>
+
+                      <div className="flex flex-shrink-0 items-center gap-2">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-medium capitalize",
+                            SENTIMENT_PILL[m.dominantLabel],
+                          )}
+                        >
+                          {m.dominantLabel}
+                        </span>
+
+                        <span className="text-sm font-semibold text-[#f6fff7]">
+                          {m.averageScore}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <span
+
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#0d1808]">
+                      <div
                         className={cn(
-                          'rounded-full px-2.5 py-1 text-[11px] font-medium capitalize',
-                          sentimentToneStyles[meeting.dominantLabel]
+                          "h-full rounded-full",
+                          m.averageScore >= 70
+                            ? "bg-emerald-400"
+                            : m.averageScore >= 45
+                              ? "bg-[#00E4FF]"
+                              : m.averageScore >= 25
+                                ? "bg-amber-400"
+                                : "bg-red-400",
                         )}
-                      >
-                        {meeting.dominantLabel}
-                      </span>
-                      <span className="font-semibold text-white">
-                        {meeting.averageScore}
-                      </span>
+                        style={{ width: `${m.averageScore}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="mt-2 h-2 rounded-full bg-slate-800">
-                    <div
-                      className={cn(
-                        'h-2 rounded-full',
-                        meeting.averageScore >= 70
-                          ? 'bg-emerald-400'
-                          : meeting.averageScore >= 45
-                            ? 'bg-sky-400'
-                            : meeting.averageScore >= 25
-                              ? 'bg-amber-400'
-                              : 'bg-red-400'
-                      )}
-                      style={{ width: `${meeting.averageScore}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
       </section>
     </div>
-  )
-}
-
-function InsightStat({
-  icon: Icon,
-  label,
-  value,
-  color,
-}: {
-  icon: typeof TrendingUp
-  label: string
-  value: number
-  color: string
-}) {
-  return (
-    <div className="rounded-2xl bg-[#1e1c32] border border-slate-700/40 p-4">
-      <Icon size={18} className={color} />
-      <div className="mt-3 text-2xl font-bold text-white">{value}</div>
-      <div className="text-xs text-slate-500">{label}</div>
-    </div>
-  )
-}
-
-function EmptyState({ text }: { text: string }) {
-  return <p className="text-sm leading-relaxed text-slate-500">{text}</p>
+  );
 }

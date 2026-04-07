@@ -1,4 +1,4 @@
-//app/projects/[id]/page.tsx
+// app/projects/[id]/page.tsx
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
@@ -7,16 +7,14 @@ import ProjectInsights from "@/components/ProjectInsights";
 import ProjectOverviewCharts from "@/components/ProjectOverviewCharts";
 import Link from "next/link";
 import {
-  ArrowLeft,
   FileText,
   Calendar,
   Users,
   AlignLeft,
   ChevronRight,
-  CheckSquare,
-  TrendingUp,
+  MessageSquare,
+  Upload,
 } from "lucide-react";
-
 import { formatDate } from "@/lib/utils";
 import {
   summarizeProjectDecisions,
@@ -26,21 +24,14 @@ import {
 async function getProject(projectId: string, clerkUserId: string) {
   const user = await prisma.user.findUnique({ where: { clerkUserId } });
   if (!user) return null;
-
   return prisma.project.findFirst({
     where: { id: projectId, ownerId: user.id },
     include: {
       meetings: {
         include: {
-          decisions: {
-            orderBy: { createdAt: "desc" },
-          },
-          actionItems: {
-            orderBy: { createdAt: "desc" },
-          },
-          sentiments: {
-            orderBy: { createdAt: "desc" },
-          },
+          decisions: { orderBy: { createdAt: "desc" } },
+          actionItems: { orderBy: { createdAt: "desc" } },
+          sentiments: { orderBy: { createdAt: "desc" } },
           _count: {
             select: { actionItems: true, decisions: true, segments: true },
           },
@@ -51,12 +42,12 @@ async function getProject(projectId: string, clerkUserId: string) {
   });
 }
 
-const statusColors: Record<string, string> = {
-  UPLOADED: "bg-slate-700/60 text-slate-200 border border-slate-500/20",
+const STATUS_COLORS: Record<string, string> = {
+  UPLOADED: "bg-slate-700/60 text-slate-300 border border-slate-600/20",
   PARSING: "bg-sky-500/15 text-sky-300 border border-sky-500/20",
-  PARSED: "bg-cyan-500/15 text-cyan-300 border border-cyan-500/20",
+  PARSED: "bg-[#00E4FF]/10 text-[#00E4FF] border border-[#00E4FF]/20",
   ANALYZING: "bg-amber-500/15 text-amber-300 border border-amber-500/20",
-  ANALYZED: "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20",
+  ANALYZED: "bg-[#26a269]/15 text-[#69FF97] border border-[#26a269]/25",
   ERROR: "bg-red-500/15 text-red-300 border border-red-500/20",
 };
 
@@ -71,223 +62,197 @@ export default async function ProjectPage({
   const project = await getProject(params.id, userId);
   if (!project) notFound();
 
-  const initialDecisionSummary = summarizeProjectDecisions(project.meetings);
-  const initialSentimentSummary = summarizeProjectSentiment(project.meetings);
+  const decisionSummary = summarizeProjectDecisions(project.meetings);
+  const sentimentSummary = summarizeProjectSentiment(project.meetings);
 
-  const totalSegments = project.meetings.reduce(
-    (sum, meeting) => sum + meeting._count.segments,
-    0,
-  );
-  const totalWords = project.meetings.reduce(
-    (sum, meeting) => sum + meeting.wordCount,
-    0,
-  );
-  const chartData = project.meetings.map((meeting, index) => ({
-    name: meeting.title.length > 14 ? `M${index + 1}` : meeting.title,
-    segments: meeting._count.segments,
-    actions: meeting._count.actionItems,
-    decisions: meeting._count.decisions,
+  const chartData = project.meetings.map((m, i) => ({
+    name: m.title.length > 14 ? `M${i + 1}` : m.title,
+    segments: m._count.segments,
+    actions: m._count.actionItems,
+    decisions: m._count.decisions,
   }));
+
+  const hasAnalyzedMeetings = project.meetings.some(
+    (m) => m.status === "ANALYZED",
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#050a00] text-[#d5f5dc]">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(105,255,151,0.18),transparent_28%),radial-gradient(circle_at_85%_20%,rgba(0,228,255,0.12),transparent_24%),radial-gradient(circle_at_bottom,rgba(38,162,105,0.16),transparent_30%),linear-gradient(180deg,#050a00_0%,#071005_55%,#050a00_100%)]" />
-      <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(38,162,105,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(38,162,105,0.08)_1px,transparent_1px)] [background-size:72px_72px]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(105,255,151,0.16),transparent_28%),radial-gradient(circle_at_85%_20%,rgba(0,228,255,0.10),transparent_24%),radial-gradient(circle_at_bottom,rgba(38,162,105,0.14),transparent_30%),linear-gradient(180deg,#050a00_0%,#071005_55%,#050a00_100%)]" />
+      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(38,162,105,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(38,162,105,0.07)_1px,transparent_1px)] [background-size:72px_72px]" />
 
       <div className="relative z-10">
         <Navbar />
-        <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <section className="rounded-[32px] border border-[#26a269]/18 bg-[#081004]/76 px-6 py-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:px-8">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 text-sm text-[#8fb79a] transition-colors hover:text-[#d5f5dc]"
-            >
-              <ArrowLeft size={14} />
-              Back to dashboard
-            </Link>
+        <main className="mx-auto max-w-7xl space-y-10 px-4 py-10 sm:px-6 lg:px-8">
+          {/* Hero */}
+          <section className="rounded-[32px] border border-[#26a269]/20 bg-[#081004]/80 px-6 py-8 shadow-[0_28px_72px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:px-8">
+            <nav className="flex items-center gap-2 text-sm text-[#8fb79a]">
+              <Link
+                href="/dashboard"
+                className="transition-colors hover:text-[#d5f5dc]"
+              >
+                Dashboard
+              </Link>
+              <span className="text-[#26a269]/40">/</span>
+              <span className="max-w-60 truncate text-[#d5f5dc]">
+                {project.name}
+              </span>
+            </nav>
 
-            <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-              <div className="max-w-3xl">
-                <p className="text-sm uppercase tracking-[0.22em] text-[#69FF97]">
-                  Project Workspace
+            <div className="mt-5 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-[0.22em] text-[#69FF97]">
+                  Project workspace
                 </p>
-                <h1 className="mt-4 text-4xl font-semibold tracking-[-0.05em] text-[#f6fff7] sm:text-5xl">
+                <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[#f6fff7] sm:text-4xl">
                   {project.name}
                 </h1>
-                <p className="mt-4 text-sm leading-7 text-[#8fb79a] sm:text-base">
+                <p className="mt-2 text-sm text-[#8fb79a]">
                   {project.meetings.length} meeting
-                  {project.meetings.length !== 1 ? "s" : ""} in this project ·
-                  created {formatDate(project.createdAt)}
+                  {project.meetings.length !== 1 ? "s" : ""}
+                  {" · "}created {formatDate(project.createdAt)}
                 </p>
               </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href="/upload"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#26a269]/20 bg-[#0d1808] px-5 py-2.5 text-sm font-medium text-[#9fd8ad] transition-colors hover:border-[#26a269]/35 hover:text-[#d5f5dc]"
+                >
+                  <Upload size={14} />
+                  Upload transcript
+                </Link>
+                <Link
+                  href={`/chat?projectId=${project.id}`}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#26a269] px-5 py-2.5 text-sm font-medium text-[#041102] transition-colors hover:bg-[#30bb77]"
+                >
+                  <MessageSquare size={14} />
+                  Project chat
+                </Link>
+              </div>
+            </div>
+          </section>
 
+          {/* Meetings — always first */}
+          <section>
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-[#f6fff7]">Meetings</h2>
               <Link
-                href={`/chat?projectId=${project.id}`}
-                className="plasma-button plasma-button-secondary inline-flex items-center gap-2 self-start rounded-full px-6 py-3 text-sm font-medium text-[#041102] transition-transform hover:scale-[1.01]"
+                href="/upload"
+                className="text-sm text-[#26a269] transition-colors hover:text-[#69FF97]"
               >
-                Open project chat
+                + Add meeting
               </Link>
             </div>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {[
-                {
-                  label: "Meetings",
-                  value: project.meetings.length,
-                  icon: FileText,
-                  tone: "text-[#69FF97]",
-                },
-                {
-                  label: "Segments",
-                  value: totalSegments,
-                  icon: AlignLeft,
-                  tone: "text-[#00E4FF]",
-                },
-                {
-                  label: "Actions",
-                  value: initialDecisionSummary.totalActionItems,
-                  icon: CheckSquare,
-                  tone: "text-[#9affba]",
-                },
-                {
-                  label: "Decisions",
-                  value: initialDecisionSummary.totalDecisions,
-                  icon: TrendingUp,
-                  tone: "text-[#d5f5dc]",
-                },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="rounded-[24px] border border-[#26a269]/12 bg-[#0a1406]/72 p-5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-[0.18em] text-[#70907a]">
-                      {stat.label}
-                    </span>
-                    <stat.icon size={16} className={stat.tone} />
-                  </div>
-                  <div className="mt-5 text-3xl font-semibold tracking-[-0.04em] text-[#f6fff7]">
-                    {stat.value}
-                  </div>
+            {project.meetings.length === 0 ? (
+              <div className="rounded-[28px] border border-[#26a269]/20 bg-[#081004]/80 px-6 py-16 text-center backdrop-blur-xl">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[18px] border border-[#26a269]/20 bg-[#0d1808] text-[#69FF97]">
+                  <FileText size={24} />
                 </div>
-              ))}
-            </div>
+                <h3 className="text-lg font-semibold text-[#f6fff7]">
+                  No meetings yet
+                </h3>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#8fb79a]">
+                  Upload a .txt or .vtt transcript to start extracting
+                  decisions, actions, and sentiment.
+                </p>
+                <Link
+                  href="/upload"
+                  className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#26a269] px-6 py-3 text-sm font-medium text-[#041102] transition-colors hover:bg-[#30bb77]"
+                >
+                  <Upload size={14} />
+                  Upload transcript
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {project.meetings.map((meeting) => (
+                  <Link
+                    key={meeting.id}
+                    href={`/projects/${project.id}/meetings/${meeting.id}`}
+                    className="group flex items-center gap-4 rounded-[24px] border border-[#26a269]/20 bg-[#081004]/80 p-5 shadow-[0_12px_32px_rgba(0,0,0,0.18)] backdrop-blur-xl transition-all hover:border-[#26a269]/35 hover:bg-[#0b1507]"
+                  >
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-[#26a269]/20 bg-[#0d1808] text-[#69FF97]">
+                      <FileText size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1.5 flex flex-wrap items-center gap-3">
+                        <h3 className="truncate text-sm font-medium text-[#f6fff7] transition-colors group-hover:text-[#69FF97]">
+                          {meeting.title}
+                        </h3>
+                        <span
+                          className={`flex-shrink-0 rounded-full px-2.5 py-0.5 text-[10px] font-medium capitalize ${STATUS_COLORS[meeting.status]}`}
+                        >
+                          {meeting.status.toLowerCase()}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#70907a]">
+                        <span className="flex items-center gap-1">
+                          <Calendar size={10} />
+                          {formatDate(meeting.createdAt)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users size={10} />
+                          {meeting.speakerCount} speakers
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <AlignLeft size={10} />
+                          {meeting.wordCount.toLocaleString()} words
+                        </span>
+                      </div>
+                    </div>
+                    <div className="hidden items-center gap-5 text-center md:flex">
+                      <div>
+                        <div className="text-base font-semibold text-[#f6fff7]">
+                          {meeting._count.actionItems}
+                        </div>
+                        <div className="text-[10px] text-[#70907a]">
+                          actions
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-base font-semibold text-[#f6fff7]">
+                          {meeting._count.decisions}
+                        </div>
+                        <div className="text-[10px] text-[#70907a]">
+                          decisions
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight
+                      size={14}
+                      className="flex-shrink-0 text-[#5f7c68] transition-colors group-hover:text-[#d5f5dc]"
+                    />
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
 
-          {project.meetings.length > 0 && (
-            <div className="mt-10">
-              <ProjectOverviewCharts meetingData={chartData} />
-            </div>
+          {/* Charts — only with 2+ meetings */}
+          {project.meetings.length > 1 && (
+            <ProjectOverviewCharts meetingData={chartData} />
           )}
 
-          <section className="mt-10">
-            <div className="mb-5 flex items-end justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-semibold text-[#f6fff7]">
-                  Meetings
-                </h2>
-                <p className="mt-1 text-sm text-[#8fb79a]">
-                  {totalWords.toLocaleString()} words across the full project
-                </p>
-              </div>
+          {/* Project-level AI insights */}
+          {hasAnalyzedMeetings && (
+            <ProjectInsights
+              projectId={project.id}
+              initialDecisions={decisionSummary}
+              initialSentiment={sentimentSummary}
+            />
+          )}
+
+          {/* Nudge to run analysis */}
+          {!hasAnalyzedMeetings && project.meetings.length > 0 && (
+            <div className="rounded-[24px] border border-[#26a269]/20 bg-[#081004]/60 px-6 py-8 text-center backdrop-blur-xl">
+              <p className="text-sm text-[#8fb79a]">
+                Open a meeting and run{" "}
+                <span className="text-[#69FF97]">AI Analysis</span> to unlock
+                project-level insights here.
+              </p>
             </div>
-
-            <div className="space-y-3">
-              {project.meetings.length === 0 && (
-                <div className="rounded-[32px] border border-[#26a269]/14 bg-[#081004]/72 px-6 py-16 text-center shadow-[0_25px_70px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:px-8">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#26a269]/16 bg-[#0d1808] text-[#69FF97]">
-                    <FileText size={28} />
-                  </div>
-                  <h2 className="mt-6 text-2xl font-semibold text-[#f6fff7]">
-                    No meetings yet
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-md text-sm leading-7 text-[#8fb79a]">
-                    Upload a transcript to start building decision and sentiment
-                    analysis for this project.
-                  </p>
-                  <Link
-                    href="/upload"
-                    className="plasma-button plasma-button-primary mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium text-white transition-transform hover:scale-[1.01]"
-                  >
-                    Upload transcript
-                  </Link>
-                </div>
-              )}
-
-              {project.meetings.map((meeting) => (
-                <Link
-                  key={meeting.id}
-                  href={`/projects/${project.id}/meetings/${meeting.id}`}
-                  className="group flex items-center gap-4 rounded-[28px] border border-[#26a269]/12 bg-[#081004]/76 p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)] transition-all hover:border-[#26a269]/24 hover:bg-[#0b1507]"
-                >
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#26a269]/16 bg-[#0d1808] text-[#69FF97]">
-                    <FileText size={18} />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex items-center gap-3">
-                      <h3 className="truncate text-base font-medium text-[#f6fff7] transition-colors group-hover:text-[#69FF97]">
-                        {meeting.title}
-                      </h3>
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium capitalize ${statusColors[meeting.status]}`}
-                      >
-                        {meeting.status.toLowerCase()}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-[#70907a]">
-                      <span className="flex items-center gap-1.5">
-                        <Calendar size={12} />
-                        {formatDate(meeting.createdAt)}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Users size={12} />
-                        {meeting.speakerCount} speakers
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <AlignLeft size={12} />
-                        {meeting.wordCount.toLocaleString()} words
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="hidden items-center gap-5 text-center md:flex">
-                    <div>
-                      <div className="text-lg font-semibold text-[#f6fff7]">
-                        {meeting._count.segments}
-                      </div>
-                      <div className="text-[11px] text-[#70907a]">segments</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-[#f6fff7]">
-                        {meeting._count.actionItems}
-                      </div>
-                      <div className="text-[11px] text-[#70907a]">actions</div>
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold text-[#f6fff7]">
-                        {meeting._count.decisions}
-                      </div>
-                      <div className="text-[11px] text-[#70907a]">
-                        decisions
-                      </div>
-                    </div>
-                  </div>
-
-                  <ChevronRight
-                    size={16}
-                    className="flex-shrink-0 text-[#5f7c68] transition-colors group-hover:text-[#d5f5dc]"
-                  />
-                </Link>
-              ))}
-            </div>
-          </section>
-
-          <ProjectInsights
-            projectId={project.id}
-            initialDecisions={initialDecisionSummary}
-            initialSentiment={initialSentimentSummary}
-          />
+          )}
         </main>
       </div>
     </div>

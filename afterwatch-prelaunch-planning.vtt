@@ -1,0 +1,35 @@
+WEBVTT
+
+NOTE Meeting Date: February 7 2026
+NOTE Topic: AfterWatch pre-launch planning
+NOTE Started at 11:00
+
+00:00:00.000 --> 00:00:08.000
+<v Aisha> We are roughly two months from launch, so today I want decisions on core scope, launch positioning, and the engineering milestones we cannot slip.
+
+00:00:08.500 --> 00:00:16.000
+<v Rahul> Product recommends we keep the first release focused on ratings, watchlists, diary entries, and profile activity. Social comments can wait until after launch.
+
+00:00:16.500 --> 00:00:24.000
+<v Mei> Design is aligned with that. We can finish the visual system and the movie detail page comfortably, but adding comments now would push us into rushed UI work.
+
+00:00:24.500 --> 00:00:32.000
+<v Vikram> Engineering can support the leaner scope. Search, ratings, and watchlists are stable in staging, but comment threads would require moderation logic we do not have yet.
+
+00:00:32.500 --> 00:00:40.000
+<v Priya> From a branding angle, simpler is better. The story should be rate what you just watched, not a giant social network for movie discourse on day one.
+
+00:00:40.500 --> 00:00:48.000
+<v Omar> Infrastructure can handle launch if we size for read-heavy traffic. Recommendations are the expensive piece, so we should cache aggressively before public release.
+
+00:00:48.500 --> 00:00:56.000
+<v Daniel> Analytics needs one clear success definition. I suggest day-one activation equals account creation plus first rating plus one saved watchlist item.
+
+00:00:56.500 --> 00:01:04.000
+<v Elena> Support wants early help content for imports, spoilers, and account recovery. Those three topics already dominate tester questions.
+
+00:01:04.500 --> 00:01:12.000
+<v Aisha> Decision: we launch without comments, keep the core movie tracking workflow tight, and prioritize clarity, speed, and a polished first session over extra features.
+
+00:01:12.500 --> 00:01:20.000
+<v Aisha> Action items: Rahul locks MVP scope by Monday, Mei ships final onboarding screens by next Friday, Vikram and Omar finish caching and launch-readiness checks by month end, Priya drafts launch messaging next week, and Elena prepares help content before beta close.

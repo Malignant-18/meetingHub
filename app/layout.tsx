@@ -12,7 +12,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "MeetingHub",
+  title: "Mr.Minutes",
   description: "Transform meeting transcripts into structured knowledge",
 };
 

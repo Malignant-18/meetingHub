@@ -74,17 +74,9 @@ export default async function MeetingPage({
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#081004] text-[#d5f5dc]">
       {/* Navbar + action buttons */}
-      <div className="relative z-20">
+      <div className="relative sticky top-0 z-20">
         <Navbar />
         {/* Floating action bar below navbar */}
-        <div className="mx-auto flex max-w-7xl items-center justify-end gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          {canAnalyze && (
-            <AnalyzeButton meetingId={meeting.id} isAnalyzed={isAnalyzed} />
-          )}
-          {isAnalyzed && (
-            <SentimentButton meetingId={meeting.id} hasResults={hasSentiment} />
-          )}
-        </div>
       </div>
 
       {/* Client component owns all interactive state */}

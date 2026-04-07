@@ -22,7 +22,7 @@ export default function Navbar() {
           href="/dashboard"
           className="text-lg font-semibold tracking-tight text-[#f3fff5]"
         >
-          MeetingHub
+          Mr.Minutes
         </Link>
 
         <nav className="hidden items-center gap-2 rounded-full  px-2 py-2 md:flex">

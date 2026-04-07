@@ -1,7 +1,10 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import AnalyzeButton from "@/components/AnalyzeButton";
+import SentimentButton from "@/components/SentimentButton";
+import ResetMeetingAIButton from "@/components/ResetMeetingAIButton";
 import {
   BarChart,
   Bar,
@@ -24,13 +27,11 @@ import {
   BarChart2,
   MessageSquare,
   BookOpen,
-  Download,
   Clock,
   Loader2,
   CheckCircle2,
   Circle,
   Sparkles,
-  RefreshCw,
   Link2,
 } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
@@ -128,7 +129,7 @@ const STATUS_PILL: Record<
   },
   IN_PROGRESS: {
     label: "In progress",
-    icon: <Loader2 size={11} className="animate-spin" />,
+    icon: <Loader2 size={11} />,
     className: "text-amber-400 bg-amber-900/20 border-amber-700/30",
   },
   DONE: {
@@ -203,8 +204,15 @@ export default function MeetingDetailClient({
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [highlightIds, setHighlightIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    setItems(actionItems);
+  }, [actionItems]);
+
   const isAnalyzed = meeting.status === "ANALYZED";
+  const canAnalyze = ["PARSED", "ANALYZED", "ERROR"].includes(meeting.status);
   const hasSentiment = sentiments.length > 0;
+  const hasAiData =
+    decisions.length > 0 || actionItems.length > 0 || sentiments.length > 0;
   const status = STATUS_CFG[meeting.status] ?? STATUS_CFG["UPLOADED"];
 
   // ── Derived stats ─────────────────────────────────────────────────────────
@@ -222,6 +230,7 @@ export default function MeetingDetailClient({
 
   const speakerBarData = speakerStats.map((s) => ({
     name: s.speaker.length > 10 ? s.speaker.slice(0, 10) + "…" : s.speaker,
+    speaker: s.speaker,
     segments: s.segments,
   }));
 
@@ -229,6 +238,19 @@ export default function MeetingDetailClient({
   const openTranscript = (segmentIds: string[] = []) => {
     setHighlightIds(segmentIds);
     setTranscriptOpen(true);
+  };
+
+  const openTranscriptBySpeaker = (speaker: string) => {
+    const speakerSegmentIds = transcriptSegments
+      .filter((segment) => segment.speaker === speaker)
+      .map((segment) => segment.id);
+
+    if (speakerSegmentIds.length === 0) {
+      toast.error(`No transcript lines found for ${speaker}`);
+      return;
+    }
+
+    openTranscript(speakerSegmentIds);
   };
 
   // ── Status toggle ─────────────────────────────────────────────────────────
@@ -245,7 +267,7 @@ export default function MeetingDetailClient({
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) throw new Error("Update failed");
-      toast.success(`Marked as ${next.toLowerCase().replace("_", " ")}`);
+      //toast.success(`Marked as ${next.toLowerCase().replace("_", " ")}`);
     } catch {
       setItems((prev) =>
         prev.map((a) => (a.id === item.id ? { ...a, status: item.status } : a)),
@@ -268,7 +290,7 @@ export default function MeetingDetailClient({
       {/* ── Background — matches project page ── */}
       <main className="relative z-10 mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 space-y-8">
         {/* ── Hero card — cleaner, more spacious ── */}
-        <section className="rounded-[28px] border border-[#26a269]/14 bg-[#081004]/80 px-6 py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:px-8">
+        <section className="rounded-[28px] border border-[#26a269]/10 bg-[#081004]/80 px-6 py-7 shadow-[0_24px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:px-8">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-sm text-[#8fb79a]">
             <Link
@@ -293,12 +315,6 @@ export default function MeetingDetailClient({
           {/* Title + metadata row */}
           <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-3">
-              <Link
-                href={`/projects/${meeting.project.id}`}
-                className="mt-1 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border border-[#26a269]/16 bg-[#0d1808] text-[#69FF97] transition-colors hover:bg-[#10200f]"
-              >
-                <ArrowLeft size={14} />
-              </Link>
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
                   <h1 className="text-3xl font-semibold tracking-[-0.03em] text-[#f6fff7]">
@@ -341,7 +357,7 @@ export default function MeetingDetailClient({
               <button
                 onClick={() => openTranscript()}
                 className={cn(
-                  "flex items-center gap-2 rounded-3xl border px-5 py-3 text-sm font-medium transition-all hover:scale-105",
+                  "flex items-center gap-2 rounded-3xl border px-5 py-3 text-sm font-medium transition-all ",
                   transcriptOpen
                     ? "border-[#26a269]/40 bg-[#10200f] text-[#69FF97]"
                     : "border-[#26a269]/18 bg-[#0d1808]/70 text-[#9fd8ad] hover:border-[#26a269]/34 hover:text-[#d5f5dc]",
@@ -352,56 +368,17 @@ export default function MeetingDetailClient({
               </button>
             )}
           </div>
-
-          {/* Quick stat chips — reduced visual weight */}
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              {
-                label: "Decisions",
-                value: decisions.length,
-                icon: Lightbulb,
-                tone: "text-[#69FF97]",
-                bg: "bg-[#69FF97]/8",
-              },
-              {
-                label: "Action items",
-                value: items.length,
-                icon: CheckSquare,
-                tone: "text-[#00E4FF]",
-                bg: "bg-[#00E4FF]/8",
-              },
-              {
-                label: "Pending",
-                value: pendingCount,
-                icon: Clock,
-                tone: "text-amber-400",
-                bg: "bg-amber-400/8",
-              },
-              {
-                label: "Speakers",
-                value: meeting.speakerCount,
-                icon: Users,
-                tone: "text-[#9affba]",
-                bg: "bg-[#9affba]/8",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                className="rounded-3xl border border-[#26a269]/10 bg-[#0a1406]/60 p-4 transition-colors hover:border-[#26a269]/20"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-[0.18em] text-[#70907a]">
-                    {s.label}
-                  </span>
-                  <s.icon size={15} className={s.tone} />
-                </div>
-                <div className="mt-3 text-3xl font-semibold tracking-[-0.03em] text-[#f6fff7]">
-                  {s.value}
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {canAnalyze && (
+            <AnalyzeButton meetingId={meeting.id} isAnalyzed={isAnalyzed} />
+          )}
+          {isAnalyzed && (
+            <SentimentButton meetingId={meeting.id} hasResults={hasSentiment} />
+          )}
+          {hasAiData && <ResetMeetingAIButton meetingId={meeting.id} />}
+        </div>
 
         {/* ── Not analyzed state ── */}
         {!isAnalyzed && meeting.status !== "ANALYZING" && (
@@ -554,6 +531,11 @@ export default function MeetingDetailClient({
                             fill="#26a269"
                             radius={[4, 4, 0, 0]}
                             maxBarSize={42}
+                            onClick={(payload) =>
+                              payload?.speaker
+                                ? openTranscriptBySpeaker(payload.speaker)
+                                : undefined
+                            }
                           />
                         </BarChart>
                       </ResponsiveContainer>
@@ -613,7 +595,6 @@ export default function MeetingDetailClient({
                       onClick={() => exportCSV(decisions, items, meeting.title)}
                       className="flex items-center gap-1.5 rounded-3xl border border-[#26a269]/14 bg-[#0d1808]/60 px-4 py-2 text-xs text-[#8fb79a] transition-colors hover:border-[#26a269]/28 hover:text-[#d5f5dc]"
                     >
-                      <Download size={13} />
                       Export CSV
                     </button>
                   </div>
@@ -785,7 +766,7 @@ export default function MeetingDetailClient({
 
             {/* Sentiment Tab */}
             {mainTab === "sentiment" && (
-              <div className="rounded-[28px] border border-[#26a269]/12 bg-[#081004]/80 p-8 shadow-[0_18px_48px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+              <div className="rounded-[28px] bg-[#081004]/60 p-8 shadow-[0_18px_48px_rgba(0,0,0,0.28)] backdrop-blur-xl">
                 <div className="mb-6 flex items-center gap-3">
                   <BarChart2 size={18} className="text-[#00E4FF]" />
                   <h2 className="text-lg font-semibold text-[#f6fff7]">
@@ -794,7 +775,10 @@ export default function MeetingDetailClient({
                 </div>
 
                 {hasSentiment ? (
-                  <SentimentDashboard data={sentiments} />
+                  <SentimentDashboard
+                    data={sentiments}
+                    onSpeakerSelect={openTranscriptBySpeaker}
+                  />
                 ) : (
                   <div className="rounded-3xl border border-dashed border-[#26a269]/30 py-16 text-center">
                     <BarChart2

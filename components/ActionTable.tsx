@@ -106,6 +106,77 @@ function exportToCSV(
   toast.success("CSV exported!");
 }
 
+function exportToPDF(
+  decisions: Decision[],
+  actionItems: ActionItem[],
+  meetingTitle: string,
+) {
+  const lines = [
+    `Meeting Analysis: ${meetingTitle}`,
+    "",
+    "Decisions",
+    ...(decisions.length > 0
+      ? decisions.map(
+          (decision, index) => `${index + 1}. ${decision.decisionText}`,
+        )
+      : ["No decisions extracted."]),
+    "",
+    "Action Items",
+    ...(actionItems.length > 0
+      ? actionItems.map(
+          (item, index) =>
+            `${index + 1}. ${item.task} | Owner: ${
+              item.responsiblePerson ?? "Unassigned"
+            } | Deadline: ${item.deadline ?? "Not specified"} | Status: ${item.status}`,
+        )
+      : ["No action items extracted."]),
+  ];
+
+  const escapedLines = lines.map((line) =>
+    line.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)"),
+  );
+  const textCommands = escapedLines
+    .map((line, index) => {
+      const y = 760 - index * 16;
+      return `BT /F1 11 Tf 40 ${y} Td (${line}) Tj ET`;
+    })
+    .join("\n");
+
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${textCommands.length} >>\nstream\n${textCommands}\nendstream`,
+  ];
+
+  let pdf = "%PDF-1.4\n";
+  const offsets = [0];
+
+  objects.forEach((object, index) => {
+    offsets.push(pdf.length);
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+
+  const xrefStart = pdf.length;
+  pdf += `xref\n0 ${objects.length + 1}\n`;
+  pdf += "0000000000 65535 f \n";
+  offsets.slice(1).forEach((offset) => {
+    pdf += `${offset.toString().padStart(10, "0")} 00000 n \n`;
+  });
+  pdf += `trailer\n<< /Root 1 0 R /Size ${objects.length + 1} >>\nstartxref\n${xrefStart}\n%%EOF`;
+
+  const blob = new Blob([pdf], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${meetingTitle.replace(/[^a-z0-9]/gi, "_")}_analysis.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+
+  toast.success("PDF exported!");
+}
+
 // ─── Main Component ────────────────────────────────────────────────────────
 export default function ActionTable({
   meetingId,
@@ -136,7 +207,7 @@ export default function ActionTable({
         body: JSON.stringify({ status: nextStatus }),
       });
       if (!res.ok) throw new Error("Failed to update");
-      toast.success(`Marked as ${nextStatus.toLowerCase().replace("_", " ")}`);
+      //toast.success(`Marked as ${nextStatus.toLowerCase().replace("_", " ")}`);
     } catch {
       // Revert on failure
       setItems((prev) =>
@@ -205,14 +276,22 @@ export default function ActionTable({
           </button>
         </div>
 
-        {/* Export CSV */}
-        <button
-          onClick={() => exportToCSV(decisions, items, meetingTitle)}
-          className="flex items-center gap-1.5 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 text-xs px-3 py-1.5 rounded-lg transition-all"
-        >
-          <Download size={12} />
-          Export CSV
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportToCSV(decisions, items, meetingTitle)}
+            className="flex items-center gap-1.5 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 text-xs px-3 py-1.5 rounded-lg transition-all"
+          >
+            <Download size={12} />
+            Export CSV
+          </button>
+          <button
+            onClick={() => exportToPDF(decisions, items, meetingTitle)}
+            className="flex items-center gap-1.5 text-slate-400 hover:text-white border border-slate-600 hover:border-slate-400 text-xs px-3 py-1.5 rounded-lg transition-all"
+          >
+            <Download size={12} />
+            Export PDF
+          </button>
+        </div>
       </div>
 
       {/* ── Decisions tab ── */}

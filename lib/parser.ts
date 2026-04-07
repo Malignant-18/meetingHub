@@ -15,13 +15,57 @@ export interface ParseResult {
   wordCount: number
   speakerCount: number
   rawText: string
+  meetingDate: string | null
+}
+
+function normalizeDetectedDate(raw: string): string | null {
+  const cleaned = raw
+    .replace(/\b(on|date|meeting date)\b[:\s-]*/gi, "")
+    .replace(/,/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (!cleaned) return null;
+
+  const parsed = new Date(cleaned);
+  if (Number.isNaN(parsed.getTime())) return null;
+
+  return parsed.toISOString();
+}
+
+function detectMeetingDate(content: string, filename: string): string | null {
+  const filenameMatch = filename.match(
+    /\b(20\d{2}[-_/.](0?[1-9]|1[0-2])[-_/.](0?[1-9]|[12]\d|3[01]))\b/,
+  );
+  if (filenameMatch) {
+    return normalizeDetectedDate(filenameMatch[1].replace(/[_/]/g, "-"));
+  }
+
+  const topText = content.split("\n").slice(0, 20).join("\n");
+  const patterns = [
+    /\b(?:meeting date|date)\s*[:\-]?\s*([A-Z][a-z]{2,8}\s+\d{1,2}\s+\d{4})/i,
+    /\b(?:meeting date|date)\s*[:\-]?\s*(\d{4}[-/]\d{1,2}[-/]\d{1,2})/i,
+    /\b(?:meeting date|date)\s*[:\-]?\s*(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+    /\b([A-Z][a-z]{2,8}\s+\d{1,2},?\s+\d{4})\b/,
+    /\b(20\d{2}[-/]\d{1,2}[-/]\d{1,2})\b/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = topText.match(pattern);
+    if (match?.[1]) {
+      const detected = normalizeDetectedDate(match[1]);
+      if (detected) return detected;
+    }
+  }
+
+  return null;
 }
 
 // ─── VTT Parser ────────────────────────────────────────────────────────────
 // Handles WebVTT format:
 // 00:00:10.500 --> 00:00:13.000
 // <v John> We should delay the API launch.
-function parseVTT(content: string): ParseResult {
+function parseVTT(content: string, filename: string): ParseResult {
   const lines = content.split('\n')
   const segments: ParsedSegment[] = []
   const speakerSet = new Set<string>()
@@ -80,6 +124,7 @@ function parseVTT(content: string): ParseResult {
     wordCount,
     speakerCount: speakerSet.size,
     rawText: content,
+    meetingDate: detectMeetingDate(content, filename),
   }
 }
 
@@ -88,7 +133,7 @@ function parseVTT(content: string): ParseResult {
 //   John: We should delay the launch.
 //   [00:10] Sarah: I agree with that.
 //   SPEAKER_01: Hello everyone.
-function parseTXT(content: string): ParseResult {
+function parseTXT(content: string, filename: string): ParseResult {
   const lines = content.split('\n').map((l) => l.trim()).filter(Boolean)
   const segments: ParsedSegment[] = []
   const speakerSet = new Set<string>()
@@ -143,6 +188,7 @@ function parseTXT(content: string): ParseResult {
     wordCount,
     speakerCount: speakerSet.size,
     rawText: content,
+    meetingDate: detectMeetingDate(content, filename),
   }
 }
 
@@ -150,8 +196,8 @@ function parseTXT(content: string): ParseResult {
 export function parseTranscript(content: string, filename: string): ParseResult {
   const ext = filename.split('.').pop()?.toLowerCase()
 
-  if (ext === 'vtt') return parseVTT(content)
-  if (ext === 'txt') return parseTXT(content)
+  if (ext === 'vtt') return parseVTT(content, filename)
+  if (ext === 'txt') return parseTXT(content, filename)
 
   throw new Error(`Unsupported file type: .${ext}. Only .txt and .vtt are supported.`)
 }

@@ -9,14 +9,14 @@ Date: 2026-04-07
 [x] Existing project or new project upload flow
 [x] Upload summary shown per file
 [x] Meeting metadata captured: speaker count, word count, segment count
-[ ] Detected meeting date extraction is not clearly implemented end-to-end in upload summary
+[x] Detected meeting date extraction and display in upload summary
 
 [x] Feature 2: Decision and Action Item Extractor
 [x] Gemini-based extraction implemented
 [x] Decisions separated from action items
 [x] Meeting detail view shows structured decisions/action items table
 [x] Project-level decision/action rollup implemented
-[ ] CSV/PDF export for decisions/action items not implemented
+[x] CSV/PDF export for decisions/action items implemented
 
 [x] Feature 3: Contextual Query Engine (Chatbot)
 [x] Chatbot works for meeting context
@@ -39,7 +39,7 @@ Date: 2026-04-07
 [x] Minimum expectation 1: Dashboard home page
 [x] Dashboard lists uploaded projects
 [x] Dashboard shows quick stats
-[~] "Overall sentiment score" is not clearly surfaced as a single dashboard KPI
+[x] "Overall sentiment score" surfaced as a dashboard KPI
 
 [x] Minimum expectation 2: Upload interface
 [x] Clean multi-step upload flow
@@ -66,10 +66,10 @@ Pending polish before/demo during submission
 [ ] Final copy cleanup / wording consistency
 
 Not done
-[ ] Export decisions/action items as CSV
-[ ] Export decisions/action items as PDF
-[ ] Strong transcript meeting-date extraction and display in upload summaries
-[ ] Global dashboard-level overall sentiment KPI
+[x] Export decisions/action items as CSV
+[x] Export decisions/action items as PDF
+[x] Strong transcript meeting-date extraction and display in upload summaries
+[x] Global dashboard-level overall sentiment KPI
 [ ] Final production hardening / exhaustive QA
 
 Way forward today
@@ -84,9 +84,9 @@ Way forward today
 3. If time is limited, prioritize fixing only blockers:
    runtime errors, broken navigation, failed API routes, broken DB writes
 4. If no blocker remains, submit with clear note:
-   export features and some final polish are pending, but core end-to-end workflow is implemented
+   final polish and QA are pending, but core end-to-end workflow is implemented
 
 Recommended submission framing
 - Core upload, analysis, sentiment, and chat workflow is complete
 - Project-level aggregation and dedicated chat workspace are implemented
-- Some stretch/polish items remain, mainly exports and final QA
+- Some stretch/polish items remain, mainly final QA and production hardening

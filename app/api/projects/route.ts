@@ -2,6 +2,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getOrSyncUser } from '@/lib/auth-user'
 
 // GET /api/projects — list all projects for current user
 export async function GET() {
@@ -11,10 +12,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({ where: { clerkUserId } })
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
-    }
+    const user = await getOrSyncUser(clerkUserId)
 
     const projects = await prisma.project.findMany({
       where: { ownerId: user.id },
@@ -48,11 +46,7 @@ export async function POST(req: Request) {
     }
 
     // Upsert user (first time sign-in creates the user row)
-    const user = await prisma.user.upsert({
-      where: { clerkUserId },
-      update: {},
-      create: { clerkUserId, email: '' },
-    })
+    const user = await getOrSyncUser(clerkUserId)
 
     const project = await prisma.project.create({
       data: { name, ownerId: user.id },
