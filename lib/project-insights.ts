@@ -265,9 +265,8 @@ export function mapSentimentSegmentsToRecords(
   analyzedSegments: SentimentSegment[],
 ): SentimentPersistenceRecord[] {
   const usedSegmentIds = new Set<string>();
-
-  return analyzedSegments
-    .map((item) => {
+  const records: Array<SentimentPersistenceRecord | null> = analyzedSegments.map(
+    (item) => {
       const segmentId = selectBestSegmentId(
         transcriptSegments,
         item,
@@ -283,8 +282,12 @@ export function mapSentimentSegmentsToRecords(
         sentimentLabel: normalizeSentimentLabel(item.sentiment),
         sentimentScore: item.score,
       };
-    })
-    .filter((item): item is SentimentPersistenceRecord => item !== null);
+    },
+  );
+
+  return records.filter(
+    (item): item is SentimentPersistenceRecord => item !== null,
+  );
 }
 
 function selectBestSegmentId(
